@@ -1,12 +1,15 @@
-module Models exposing (Model, initialModel, chatMessageDecoder)
+module Models exposing (Model, chatMessageDecoder, initialModel)
 
 import Base64
 import Dict exposing (Dict)
+import Json.Decode as JD
 import Msgs exposing (Msg)
 import Phoenix.Socket
-import Json.Decode as JD
 
-type alias UUID = String
+
+type alias UUID =
+    String
+
 
 type alias Model =
     { messages : Dict UUID ChatMessage
@@ -15,6 +18,7 @@ type alias Model =
     , channel_name : String
     , encrypted_options : String
     , public_api_id : String
+    , current_user_name : Maybe String
     }
 
 
@@ -25,13 +29,13 @@ type alias ChatMessage =
     , sent_at : String
     }
 
-chatMessageDecoder = JD.map4 ChatMessage
-                     (JD.field "uuid" JD.string)
-                     (JD.field "name" JD.string)
-                     (JD.field "content" JD.string)
-                     (JD.field "sent_at" JD.string)
 
-
+chatMessageDecoder =
+    JD.map4 ChatMessage
+        (JD.field "uuid" JD.string)
+        (JD.field "name" JD.string)
+        (JD.field "content" JD.string)
+        (JD.field "sent_at" JD.string)
 
 
 channelName : String -> String -> String
@@ -47,4 +51,5 @@ initialModel public_api_id encrypted_options socket_location =
     , encrypted_options = encrypted_options
     , public_api_id = public_api_id
     , socket_location = socket_location
+    , current_user_name = Nothing
     }

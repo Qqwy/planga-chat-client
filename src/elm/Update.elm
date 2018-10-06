@@ -25,9 +25,13 @@ update msg model =
                 , Cmd.map Msgs.PhoenixMsg phoenix_command
                 )
         Msgs.ShowJoinedMessage value ->
-            Debug.log ("Joined!" ++ toString value)
-                -- TODO Set current username here!
-                (model, Cmd.none)
+            Debug.log ("Joined!" ++ toString value) <|
+              case JD.decodeValue (JD.field "current_user_name" JD.string) value of
+                  Ok current_user_name ->
+                      ({model | current_user_name = Just current_user_name},
+                      Cmd.none)
+                  Err err ->
+                      (model, Cmd.none)
         Msgs.ShowLeftMessage ->
             Debug.log "Left!"
                 (model, Cmd.none)
