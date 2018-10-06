@@ -8,6 +8,7 @@ import Phoenix.Socket
 import Phoenix.Push
 import Debug
 import Json.Encode as JE
+import Json.Decode as JD
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -23,8 +24,9 @@ update msg model =
                 ( { model | phoenix_socket = phoenix_socket }
                 , Cmd.map Msgs.PhoenixMsg phoenix_command
                 )
-        Msgs.ShowJoinedMessage ->
-            Debug.log "Joined!"
+        Msgs.ShowJoinedMessage value ->
+            Debug.log ("Joined!" ++ toString value)
+                -- TODO Set current username here!
                 (model, Cmd.none)
         Msgs.ShowLeftMessage ->
             Debug.log "Left!"
@@ -46,3 +48,28 @@ update msg model =
                         Phoenix.Socket.push push_data model.phoenix_socket
                 in
                     ({model | phoenix_socket = phoenix_socket}, Cmd.map Msgs.PhoenixMsg phoenix_command)
+        Msgs.ReceiveMessage message_json ->
+            Debug.log "Receiving message!" <|
+              case JD.decodeValue Models.chatMessageDecoder message_json of
+                  Ok chatMessage ->
+                      ( { model | messages = chatMessage :: model.messages }
+                      , Cmd.none
+                      )
+                  Err error ->
+                      ( model, Cmd.none )
+
+        Msgs.MessagesSoFar messages_json ->
+            let
+                messagesDecoder =
+                    (JD.field "messages" (JD.list Models.chatMessageDecoder) )
+            in
+              Debug.log ("Receiving old messages!" ++ toString messages_json) <|
+                case JD.decodeValue messagesDecoder messages_json of
+                    Ok chat_messages ->
+                        (
+                        { model | messages = chat_messages ++ model.messages}
+                        , Cmd.none
+                        )
+                    Err error ->
+                        (model, Cmd.none)
+

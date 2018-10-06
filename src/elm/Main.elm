@@ -46,12 +46,16 @@ setupConnection model =
         channel =
             Phoenix.Channel.init model.channel_name
                 |> Phoenix.Channel.withPayload (JE.object [])
-                |> Phoenix.Channel.onJoin (always (Msgs.ShowJoinedMessage))
+                |> Phoenix.Channel.onJoin (Msgs.ShowJoinedMessage)
                 |> Phoenix.Channel.onError (always (Msgs.ShowErrorMessage))
                 |> Phoenix.Channel.onJoinError (always (Msgs.ShowErrorMessage))
                 |> Phoenix.Channel.onClose (always (Msgs.ShowLeftMessage))
         (phoenix_socket, phoenix_cmd) =
-            Phoenix.Socket.join channel model.phoenix_socket
+            model.phoenix_socket
+                |> Phoenix.Socket.withDebug
+                |> Phoenix.Socket.on "new_remote_message" model.channel_name Msgs.ReceiveMessage
+                |> Phoenix.Socket.on "messages_so_far" model.channel_name Msgs.MessagesSoFar
+                |> Phoenix.Socket.join channel
     in
         ({model | phoenix_socket = phoenix_socket}, Cmd.map Msgs.PhoenixMsg phoenix_cmd)
         -- (model, Cmd.none)
