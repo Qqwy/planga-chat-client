@@ -2,14 +2,14 @@ module Models exposing (Model, initialModel, chatMessageDecoder)
 
 import Base64
 import Dict exposing (Dict)
-import Html exposing (Html)
 import Msgs exposing (Msg)
 import Phoenix.Socket
 import Json.Decode as JD
 
+type alias UUID = String
 
 type alias Model =
-    { messages : List ChatMessage
+    { messages : Dict UUID ChatMessage
     , phoenix_socket : Phoenix.Socket.Socket Msg
     , socket_location : String
     , channel_name : String
@@ -41,7 +41,7 @@ channelName public_api_id encrypted_options =
 
 initialModel : String -> String -> String -> Model
 initialModel public_api_id encrypted_options socket_location =
-    { messages = []
+    { messages = Dict.empty
     , channel_name = channelName public_api_id encrypted_options
     , phoenix_socket = Phoenix.Socket.init socket_location
     , encrypted_options = encrypted_options

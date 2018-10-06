@@ -52,9 +52,13 @@ update msg model =
             Debug.log "Receiving message!" <|
               case JD.decodeValue Models.chatMessageDecoder message_json of
                   Ok chatMessage ->
-                      ( { model | messages = chatMessage :: model.messages }
-                      , Cmd.none
-                      )
+                      let
+                          updated_messages =
+                              Dict.insert chatMessage.uuid chatMessage model.messages
+                      in
+                        ( { model | messages = updated_messages}
+                        , Cmd.none
+                        )
                   Err error ->
                       ( model, Cmd.none )
 
@@ -66,10 +70,19 @@ update msg model =
               Debug.log ("Receiving old messages!" ++ toString messages_json) <|
                 case JD.decodeValue messagesDecoder messages_json of
                     Ok chat_messages ->
-                        (
-                        { model | messages = chat_messages ++ model.messages}
-                        , Cmd.none
-                        )
+                        let
+                          new_messages =
+                              chat_messages
+                                  |> List.map (\message -> (message.uuid, message))
+                                  |> Dict.fromList
+                          updated_messages =
+                              model.messages
+                              |> Dict.union new_messages
+                        in
+                          (
+                          { model | messages = updated_messages }
+                          , Cmd.none
+                          )
                     Err error ->
                         (model, Cmd.none)
 
