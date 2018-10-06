@@ -101,7 +101,7 @@ newMessageForm model =
           [ div [ class "planga--new-message-field-wrapper" ]
               [ input [ maxlength 4096, placeholder placeholder_value, name "planga-new-message-field", class "planga--new-message-field", onInput Msgs.ChangeDraftMessage, value model.draft_message ] []
               ]
-          , button [ class "planga--new-message-submit-button", onClick (Msgs.SendMessage model.draft_message)]
+          , button [ class "planga--new-message-submit-button"]
               [ text "Send"
               ]
           ]
