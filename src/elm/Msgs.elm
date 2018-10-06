@@ -7,4 +7,5 @@ type Msg
     | ShowJoinedMessage
     | ShowErrorMessage
     | ShowLeftMessage
+    | SendMessage String
 

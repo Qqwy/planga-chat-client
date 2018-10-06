@@ -8,29 +8,47 @@ import Phoenix.Channel
 import Update
 import View
 import Json.Encode as JE
+import Base64
 
 
 init : String -> ( Model, Cmd Msg )
 init flags =
     let
+        public_api_id = "foobar"
+        encrypted_options = "eyJhbGciOiJBMTI4R0NNS1ciLCJlbmMiOiJBMTI4R0NNIiwiaXYiOiJ4VVgyM0NreGFoaFZxU1pnIiwidGFnIjoiREVIYldpV3p0Zy1NYjJFcU5UMHBPQSJ9.KMHBCIOzNHzbV-tFMS0_dg.qWj7Hloah1mhEbAk.zmijotwRq9lK9VcbRGWdY2BOjCLHjNAKaDf0wsRH7Rs8moMnVmnZYk8gQnBv1i-mtbj_NwPcBawG4XddpU9dgIMowSYN7XGCXBhf24za274w43sJyRlVgac.ZlNeDKNjXdHEftHaXh7KRA"
+        socket_location = "ws://localhost:4000/socket/websocket"
+
         model =
-            initialModel "http://localhost:4000/socket/websocket"
+            initialModel public_api_id encrypted_options socket_location
+            -- initialModel "ws://phoenixchat.herokuapp.com/ws"
     in
         model
             |> parseFlags flags
 
-userParams : JE.Value
-userParams =
-    JE.object [ ( "user_id", JE.string "123" ) ]
+userParams : String -> String -> JE.Value
+userParams public_api_id encrypted_options=
+    -- JE.object [ ( "user_id", JE.string "123" ) ]
+    JE.object
+        [ ("encrypted_chat", JE.string <| public_api_id ++ "#" ++ encrypted_options )
+        ]
+
+
+
+flags =
+    JE.object [ ( "public_api_id", JE.string "foobar")
+                , ("encrypted_options", JE.string "eyJhbGciOiJBMTI4R0NNS1ciLCJlbmMiOiJBMTI4R0NNIiwiaXYiOiJ4VVgyM0NreGFoaFZxU1pnIiwidGFnIjoiREVIYldpV3p0Zy1NYjJFcU5UMHBPQSJ9.KMHBCIOzNHzbV-tFMS0_dg.qWj7Hloah1mhEbAk.zmijotwRq9lK9VcbRGWdY2BOjCLHjNAKaDf0wsRH7Rs8moMnVmnZYk8gQnBv1i-mtbj_NwPcBawG4XddpU9dgIMowSYN7XGCXBhf24za274w43sJyRlVgac.ZlNeDKNjXdHEftHaXh7KRA")
+                , ("socket_location", JE.string "//localhost:4000/socket")
+        ]
 
 setupConnection : Model -> (Model, Cmd Msg)
 setupConnection model =
     let
         channel =
-            Phoenix.Channel.init "rooms:lobby"
-                |> Phoenix.Channel.withPayload userParams
+            Phoenix.Channel.init model.channel_name
+                |> Phoenix.Channel.withPayload (JE.object [])
                 |> Phoenix.Channel.onJoin (always (Msgs.ShowJoinedMessage))
                 |> Phoenix.Channel.onError (always (Msgs.ShowErrorMessage))
+                |> Phoenix.Channel.onJoinError (always (Msgs.ShowErrorMessage))
                 |> Phoenix.Channel.onClose (always (Msgs.ShowLeftMessage))
         (phoenix_socket, phoenix_cmd) =
             Phoenix.Socket.join channel model.phoenix_socket
