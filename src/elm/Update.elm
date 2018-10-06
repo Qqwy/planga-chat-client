@@ -87,9 +87,12 @@ update msg model =
                           updated_messages =
                               model.messages
                               |> Dict.union new_messages
+                          new_scroll_height =
+                              model.scroll_info.scrollHeight - model.scroll_info.scrollTop
                         in
                           (
-                          { model | messages = updated_messages }
+                          { model | messages = updated_messages,
+                           overridden_scroll_height = new_scroll_height}
                           , Cmd.none
                           )
                     Err error ->
@@ -97,3 +100,11 @@ update msg model =
 
         Msgs.ChangeDraftMessage new_draft_message ->
             ({model | draft_message = new_draft_message}, Cmd.none)
+        Msgs.ScrollUpdate event ->
+            (model, Ports.fetchScrollPos event)
+        Msgs.ScrollHeightCalculated val ->
+            case JD.decodeValue Models.scrollInfoDecoder val of
+                Err _ ->
+                    (model, Cmd.none)
+                Ok scroll_info ->
+                    ({model | scroll_info = scroll_info}, Cmd.none)

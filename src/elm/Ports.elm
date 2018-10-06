@@ -1,11 +1,14 @@
-port module Ports exposing (..)
+port module Ports exposing (fetchScrollPos, persistToStorage, scrollUpdate)
 
 import Json.Decode
 import Json.Encode
 
+
 port persistToStorage : Json.Encode.Value -> Cmd msg
 
 
-port storageUpdate : (Json.Decode.Value -> msg) -> Sub msg
 
-port openInNewPage : String -> Cmd msg
+port fetchScrollPos : Json.Encode.Value -> Cmd msg
+
+
+port scrollUpdate : (Json.Decode.Value -> msg) -> Sub msg

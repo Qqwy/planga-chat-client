@@ -1,6 +1,7 @@
 module Msgs exposing (Msg(..))
 import Phoenix.Socket
 import Json.Decode as JD
+import Scroll
 
 type Msg
     = NoOp
@@ -13,4 +14,6 @@ type Msg
     | ReceiveMessage JD.Value
     | MessagesSoFar JD.Value
     | ChangeDraftMessage String
+    | ScrollUpdate JD.Value
+    | ScrollHeightCalculated JD.Value
 

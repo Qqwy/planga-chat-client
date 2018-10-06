@@ -4,11 +4,13 @@ module View exposing (view)
 
 import Dict
 import Html exposing (Html, button, div, dl, footer, header, input, span, text, form)
-import Html.Attributes exposing (attribute, class, maxlength, name, placeholder, title, value)
+import Html.Attributes exposing (attribute, class, maxlength, name, placeholder, title, value, property)
 import Html.Events exposing (onClick, onInput, onSubmit, on)
 import Models exposing (Model)
 import Msgs exposing (Msg)
 import Json.Decode
+import Json.Encode
+import Ports
 
 
 view : Model -> Html Msg
@@ -33,8 +35,14 @@ container model =
         , newMessageForm model
         ]
 
-onScroll message =
-    on "scroll" (Json.Decode.value |> Json.Decode.map (message))
+onScrollFetchScrollInfo =
+    on "scroll" (Json.Decode.value |> Json.Decode.map Msgs.ScrollUpdate)
+
+onLoadFetchScrollInfo =
+    on "load" (Json.Decode.value |> Json.Decode.map Msgs.ScrollUpdate)
+
+scrollHeight height =
+    property "scrollTop" (Json.Encode.int height)
 
 messages model =
     let
@@ -47,7 +55,7 @@ messages model =
             message_list
                 |> List.map (message model.current_user_name)
     in
-    dl [ class "planga--chat-messages"]
+    dl [ class "planga--chat-messages", onScrollFetchScrollInfo, onLoadFetchScrollInfo, scrollHeight model.overridden_scroll_height]
         messages_html
 
 
