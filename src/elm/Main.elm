@@ -1,46 +1,36 @@
 port module Main exposing (init, main, subscriptions)
 
-import Json.Decode
-import Json.Encode
 import Models exposing (Model, initialModel)
 import Msgs exposing (Msg)
 import Update
 import View
+import Html
 
 
 
-
-init : String -> Navigation.Location -> ( Model, Cmd Msg )
-init flags location =
+init : String -> ( Model, Cmd Msg )
+init flags =
     let
-        currentRoute =
-            Routing.parseLocation location
-
         model =
-            initialModel currentRoute
+            initialModel
     in
     ( model |> parseFlags flags, Cmd.none )
 
 
 parseFlags : String -> Model -> Model
 parseFlags flags model =
-    let
-        newShoppingCart =
-            flags
-                |> ShoppingCart.jsonDecodeString
-    in
-    { model | shoppingCart = newShoppingCart |> Result.withDefault model.shoppingCart }
+        model
 
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    ShoppingCart.onChange (Result.withDefault model.shoppingCart >> Msgs.LoadCartFromStorage)
+    Sub.none
 
 
 
 main : Program String Model Msg
 main =
-    Navigation.programWithFlags Msgs.LocationChange
+    Html.programWithFlags
         { init = init
         , view = View.view
         , update = Update.update
