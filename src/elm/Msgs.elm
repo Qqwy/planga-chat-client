@@ -4,6 +4,7 @@ import Json.Decode as JD
 
 type Msg
     = NoOp
+    | Debug JD.Value
     | PhoenixMsg (Phoenix.Socket.Msg Msg)
     | ShowJoinedMessage JD.Value
     | ShowErrorMessage

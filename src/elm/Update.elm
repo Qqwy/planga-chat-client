@@ -16,6 +16,11 @@ update msg model =
     case msg of
         Msgs.NoOp ->
             (model, Cmd.none)
+        Msgs.Debug string ->
+            let
+                _ = Debug.log "Debug" string
+            in
+                (model, Cmd.none)
         Msgs.PhoenixMsg msg ->
             let
                 ( phoenix_socket, phoenix_command ) = Phoenix.Socket.update msg model.phoenix_socket

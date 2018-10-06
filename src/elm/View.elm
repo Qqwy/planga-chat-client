@@ -3,11 +3,12 @@ module View exposing (view)
 -- import Listings
 
 import Dict
-import Html exposing (Html, button, div, dl, footer, header, input, span, text)
+import Html exposing (Html, button, div, dl, footer, header, input, span, text, form)
 import Html.Attributes exposing (attribute, class, maxlength, name, placeholder, title, value)
-import Html.Events exposing (onClick, onInput)
+import Html.Events exposing (onClick, onInput, onSubmit, on)
 import Models exposing (Model)
 import Msgs exposing (Msg)
+import Json.Decode
 
 
 view : Model -> Html Msg
@@ -22,7 +23,6 @@ view model =
         , container model
         ]
 
-
 data name val =
     Html.Attributes.attribute ("data-" ++ name) val
 
@@ -33,6 +33,8 @@ container model =
         , newMessageForm model
         ]
 
+onScroll message =
+    on "scroll" (Json.Decode.value |> Json.Decode.map (message))
 
 messages model =
     let
@@ -45,7 +47,7 @@ messages model =
             message_list
                 |> List.map (message model.current_user_name)
     in
-    dl [ class "planga--chat-messages" ]
+    dl [ class "planga--chat-messages"]
         messages_html
 
 
@@ -87,7 +89,7 @@ newMessageForm model =
             |> Maybe.map (\name -> name ++ ": Type your message here")
             |> Maybe.withDefault "Unable to connect to Planga Chat"
     in
-      div [ class "planga--new-message-form" ]
+      form [ class "planga--new-message-form" , onSubmit (Msgs.SendMessage model.draft_message)]
           [ div [ class "planga--new-message-field-wrapper" ]
               [ input [ maxlength 4096, placeholder placeholder_value, name "planga-new-message-field", class "planga--new-message-field", onInput Msgs.ChangeDraftMessage, value model.draft_message ] []
               ]
