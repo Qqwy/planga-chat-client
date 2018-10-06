@@ -13,6 +13,22 @@ app.ports.fetchScrollPos.subscribe(function(event){
     sendScrollPosUpdate(event.target);
 });
 
+app.ports.scrollToBottomPort.subscribe(function(_){
+    window.setTimeout(function(){
+        let elem  = wrapper_elem.getElementsByClassName("planga--chat-messages")[0];
+        elem.scrollTop = 1000000;
+    }, 100);
+});
+
+app.port.keepVScrollPosPort.subscribe(function(_){
+    let elem  = wrapper_elem.getElementsByClassName("planga--chat-messages")[0];
+    let pos = elem.scrollHeight - elem.scrollTop;
+    window.setTimeout(function(){
+        let elem  = wrapper_elem.getElementsByClassName("planga--chat-messages")[0];
+        elem.scrollTop = pos;
+    }, 1000);
+});
+
 window.setTimeout(function(){
     let elem  = wrapper_elem.getElementsByClassName("planga--chat-messages")[0];
     console.log(elem);

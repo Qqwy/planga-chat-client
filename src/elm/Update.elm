@@ -64,10 +64,13 @@ update msg model =
                       let
                           updated_messages =
                               Dict.insert chatMessage.uuid chatMessage model.messages
+                          oldest_timestamp =
+                              model.oldest_timestamp
+                                  |> minimumMaybe (Just chatMessage.sent_at)
                       in
-                        ( { model | messages = updated_messages}
-                        , Cmd.none
-                        )
+                          ( { model | messages = updated_messages, oldest_timestamp = oldest_timestamp}
+                          , Ports.scrollToBottom
+                          )
                   Err error ->
                       ( model, Cmd.none )
 
@@ -89,12 +92,17 @@ update msg model =
                               |> Dict.union new_messages
                           new_scroll_height =
                               model.scroll_info.scrollHeight - model.scroll_info.scrollTop
+                          oldest_timestamp =
+                              model.oldest_timestamp
+                              |> minimumMaybe (List.minimum (List.map .sent_at chat_messages))
                         in
-                          (
-                          { model | messages = updated_messages,
-                           overridden_scroll_height = new_scroll_height}
-                          , Cmd.none
-                          )
+                            (
+                             { model | messages = updated_messages,
+                                   overridden_scroll_height = new_scroll_height
+                             , oldest_timestamp = oldest_timestamp
+                             }
+                            , Ports.keepVScrollPos
+                            )
                     Err error ->
                         (model, Cmd.none)
 
@@ -107,4 +115,37 @@ update msg model =
                 Err _ ->
                     (model, Cmd.none)
                 Ok scroll_info ->
-                    ({model | scroll_info = scroll_info}, Cmd.none)
+                    if scroll_info.scrollTop < 50 then
+                        fetchOldMessages model
+                    else
+                        ({model | scroll_info = scroll_info}, Cmd.none)
+
+fetchOldMessages model =
+    case model.oldest_timestamp of
+        Nothing ->
+            (model, Cmd.none)
+        Just oldest_timestamp -> 
+          Debug.log "Sending Message!" <|
+              let
+                  constructed_message =
+                      JE.object [
+                          ("sent_before", JE.string oldest_timestamp)
+                          ]
+                  push_data =
+                      Phoenix.Push.init "load_old_messages" model.channel_name
+                          |> Phoenix.Push.withPayload constructed_message
+                  ( phoenix_socket, phoenix_command ) =
+                      Phoenix.Socket.push push_data model.phoenix_socket
+              in
+                  ({model | phoenix_socket = phoenix_socket}, Cmd.map Msgs.PhoenixMsg phoenix_command)
+
+
+minimumMaybe : Maybe String -> Maybe String -> Maybe String
+minimumMaybe x y =
+    case (x, y) of
+        (Nothing, y) ->
+            y
+        (x, Nothing) ->
+            x
+        (Just x, Just y) ->
+            Just (min x y)
