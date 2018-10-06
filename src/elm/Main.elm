@@ -4,23 +4,10 @@ import Json.Decode
 import Json.Encode
 import Models exposing (Model, initialModel)
 import Msgs exposing (Msg)
-import Navigation
-import Routing
-import ShoppingCart exposing (ShoppingCart)
-import Storage
 import Update
 import View
 
 
-
--- encodeStorageRequest : Int -> String
--- encodeStorageRequest val =
---     Json.Encode.encode 0 (Json.Encode.int val)
-
-
-decodeStorageResponse : String -> Result String Int
-decodeStorageResponse str =
-    Json.Decode.decodeString Json.Decode.int str
 
 
 init : String -> Navigation.Location -> ( Model, Cmd Msg )
@@ -51,10 +38,6 @@ subscriptions model =
 
 
 
--- Storage.onChange ShoppingCart.storageConfig (toString >> Msgs.PrintDebug "Storage Debug")
--- incoming (toString >> Msgs.PrintDebug "DEBUG")
-
-
 main : Program String Model Msg
 main =
     Navigation.programWithFlags Msgs.LocationChange
@@ -65,13 +48,3 @@ main =
         }
 
 
-
--- initialStorageConfig : Storage.Config Int Msg
--- initialStorageConfig =
---     { outgoingPort = outgoing
---     , incomingPort = incoming
---     , serializeToStorage = toString
---     , deserializeFromStorage = String.toInt
---     , storageMsg = Msgs.StorageWIPMsg
---     , storageKey = "MagicMillStorage"
---     }
