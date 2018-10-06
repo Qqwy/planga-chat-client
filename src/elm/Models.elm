@@ -13,6 +13,7 @@ type alias UUID =
 
 type alias Model =
     { messages : Dict UUID ChatMessage
+    , draft_message : String
     , phoenix_socket : Phoenix.Socket.Socket Msg
     , socket_location : String
     , channel_name : String
@@ -46,6 +47,7 @@ channelName public_api_id encrypted_options =
 initialModel : String -> String -> String -> Model
 initialModel public_api_id encrypted_options socket_location =
     { messages = Dict.empty
+    , draft_message = ""
     , channel_name = channelName public_api_id encrypted_options
     , phoenix_socket = Phoenix.Socket.init socket_location
     , encrypted_options = encrypted_options

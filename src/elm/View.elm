@@ -4,8 +4,8 @@ module View exposing (view)
 
 import Dict
 import Html exposing (Html, button, div, dl, footer, header, input, span, text)
-import Html.Attributes exposing (attribute, class, maxlength, name, placeholder, title)
-import Html.Events exposing (onClick)
+import Html.Attributes exposing (attribute, class, maxlength, name, placeholder, title, value)
+import Html.Events exposing (onClick, onInput)
 import Models exposing (Model)
 import Msgs exposing (Msg)
 
@@ -39,6 +39,7 @@ messages model =
         message_list =
             model.messages
                 |> Dict.values
+                |> List.sortBy .sent_at
 
         messages_html =
             message_list
@@ -88,9 +89,9 @@ newMessageForm model =
     in
       div [ class "planga--new-message-form" ]
           [ div [ class "planga--new-message-field-wrapper" ]
-              [ input [ maxlength 4096, placeholder placeholder_value, name "planga-new-message-field", class "planga--new-message-field" ] []
+              [ input [ maxlength 4096, placeholder placeholder_value, name "planga-new-message-field", class "planga--new-message-field", onInput Msgs.ChangeDraftMessage, value model.draft_message ] []
               ]
-          , button [ class "planga--new-message-submit-button" ]
+          , button [ class "planga--new-message-submit-button", onClick (Msgs.SendMessage model.draft_message)]
               [ text "Send"
               ]
           ]

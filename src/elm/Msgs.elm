@@ -11,4 +11,5 @@ type Msg
     | SendMessage String
     | ReceiveMessage JD.Value
     | MessagesSoFar JD.Value
+    | ChangeDraftMessage String
 

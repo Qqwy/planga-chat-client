@@ -51,7 +51,7 @@ update msg model =
                     ( phoenix_socket, phoenix_command ) =
                         Phoenix.Socket.push push_data model.phoenix_socket
                 in
-                    ({model | phoenix_socket = phoenix_socket}, Cmd.map Msgs.PhoenixMsg phoenix_command)
+                    ({model | phoenix_socket = phoenix_socket, draft_message = ""}, Cmd.map Msgs.PhoenixMsg phoenix_command)
         Msgs.ReceiveMessage message_json ->
             Debug.log "Receiving message!" <|
               case JD.decodeValue Models.chatMessageDecoder message_json of
@@ -90,3 +90,5 @@ update msg model =
                     Err error ->
                         (model, Cmd.none)
 
+        Msgs.ChangeDraftMessage new_draft_message ->
+            ({model | draft_message = new_draft_message}, Cmd.none)
