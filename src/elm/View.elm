@@ -80,11 +80,17 @@ message current_user_name message =
 
 
 newMessageForm model =
-    div [ class "planga--new-message-form" ]
-        [ div [ class "planga--new-message-field-wrapper" ]
-            [ input [ maxlength 4096, placeholder "PLACEHOLDER TODO", name "planga-new-message-field", class "planga--new-message-field" ] []
-            ]
-        , button [ class "planga--new-message-submit-button" ]
-            [ text "Send"
-            ]
-        ]
+    let
+        placeholder_value =
+            model.current_user_name
+            |> Maybe.map (\name -> name ++ ": Type your message here")
+            |> Maybe.withDefault "Unable to connect to Planga Chat"
+    in
+      div [ class "planga--new-message-form" ]
+          [ div [ class "planga--new-message-field-wrapper" ]
+              [ input [ maxlength 4096, placeholder placeholder_value, name "planga-new-message-field", class "planga--new-message-field" ] []
+              ]
+          , button [ class "planga--new-message-submit-button" ]
+              [ text "Send"
+              ]
+          ]
