@@ -55,7 +55,7 @@ messages model =
             message_list
                 |> List.map (message model.current_user_name)
     in
-    dl [ class "planga--chat-messages", onScrollFetchScrollInfo, onLoadFetchScrollInfo, scrollHeight model.overridden_scroll_height]
+    dl [ class "planga--chat-messages", onScrollFetchScrollInfo, onLoadFetchScrollInfo]
         messages_html
 
 

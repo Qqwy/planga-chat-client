@@ -101,7 +101,7 @@ update msg model =
                                    overridden_scroll_height = new_scroll_height
                              , oldest_timestamp = oldest_timestamp
                              }
-                            , Ports.keepVScrollPos
+                            , Ports.unlockVScrollPos
                             )
                     Err error ->
                         (model, Cmd.none)
@@ -124,7 +124,7 @@ fetchOldMessages model =
     case model.oldest_timestamp of
         Nothing ->
             (model, Cmd.none)
-        Just oldest_timestamp -> 
+        Just oldest_timestamp ->
           Debug.log "Sending Message!" <|
               let
                   constructed_message =
@@ -137,7 +137,10 @@ fetchOldMessages model =
                   ( phoenix_socket, phoenix_command ) =
                       Phoenix.Socket.push push_data model.phoenix_socket
               in
-                  ({model | phoenix_socket = phoenix_socket}, Cmd.map Msgs.PhoenixMsg phoenix_command)
+                  ({model | phoenix_socket = phoenix_socket}, Cmd.batch
+                       [Cmd.map Msgs.PhoenixMsg phoenix_command
+                       , Ports.keepVScrollPos
+                       ])
 
 
 minimumMaybe : Maybe String -> Maybe String -> Maybe String

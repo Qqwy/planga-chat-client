@@ -1,4 +1,4 @@
-port module Ports exposing (fetchScrollPos, persistToStorage, scrollUpdate, scrollToBottom, keepVScrollPos)
+port module Ports exposing (fetchScrollPos, keepVScrollPos, persistToStorage, scrollToBottom, scrollUpdate, unlockVScrollPos)
 
 import Json.Decode
 import Json.Encode
@@ -7,18 +7,31 @@ import Json.Encode
 port persistToStorage : Json.Encode.Value -> Cmd msg
 
 
-
 port fetchScrollPos : Json.Encode.Value -> Cmd msg
 
 
 port scrollUpdate : (Json.Decode.Value -> msg) -> Sub msg
 
+
 port scrollToBottomPort : () -> Cmd msg
 
+
 scrollToBottom : Cmd msg
-scrollToBottom = scrollToBottomPort ()
+scrollToBottom =
+    scrollToBottomPort ()
+
 
 port keepVScrollPosPort : () -> Cmd msg
 
+
 keepVScrollPos : Cmd msg
-keepVScrollPos = keepVScrollPosPort ()
+keepVScrollPos =
+    keepVScrollPosPort ()
+
+
+port unlockVScrollPosPort : () -> Cmd msg
+
+
+unlockVScrollPos : Cmd msg
+unlockVScrollPos =
+    unlockVScrollPosPort ()

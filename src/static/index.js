@@ -20,13 +20,23 @@ app.ports.scrollToBottomPort.subscribe(function(_){
     }, 100);
 });
 
-app.port.keepVScrollPosPort.subscribe(function(_){
+var vScrollStickInterval;
+
+app.ports.keepVScrollPosPort.subscribe(function(_){
+    if(vScrollStickInterval !== null) {
+        return;
+    }
     let elem  = wrapper_elem.getElementsByClassName("planga--chat-messages")[0];
     let pos = elem.scrollHeight - elem.scrollTop;
-    window.setTimeout(function(){
+    console.log(elem, pos);
+    vScrollStickInterval = window.setInterval(function(){
         let elem  = wrapper_elem.getElementsByClassName("planga--chat-messages")[0];
-        elem.scrollTop = pos;
-    }, 1000);
+        console.log("SCROLL FIX", elem, pos);
+        elem.scrollTop = elem.scrollHeight - pos;
+    }, 100);
+});
+app.ports.unlockVScrollPosPort.subscribe(function(_){
+    window.clearInterval(vScrollStickInterval);
 });
 
 window.setTimeout(function(){
@@ -34,7 +44,7 @@ window.setTimeout(function(){
     console.log(elem);
     elem.scrollTop = 1000000;
     sendScrollPosUpdate(elem);
-}, 900);
+}, 1000);
 
 function sendScrollPosUpdate(target) {
     app.ports.scrollUpdate.send({

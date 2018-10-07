@@ -1,6 +1,10 @@
-# MagicMill
+# Planga Chat Client
 
-This repository contains the Elm frontend of MagicMill
+This repository contains the Elm frontend of Planga.
+
+More information on https://planga.io
+
+(Note: This is not the current chat client that Planga uses, but will probably replace it in the near future. For the current version, written in JavaScript, see [the JS snippet](https://github.com/ResiliaDev/Planga/blob/master/assets/js/js_snippet.js).)
 
 ## Installation
 
