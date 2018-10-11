@@ -21,7 +21,6 @@ type alias Model =
     , encrypted_options : String
     , public_api_id : String
     , current_user_name : Maybe String
-    , fetching_messages : Bool
     , fetching_messages_scroll_pos : Maybe Float
     }
 
@@ -58,6 +57,5 @@ initialModel public_api_id encrypted_options socket_location =
     , public_api_id = public_api_id
     , socket_location = socket_location
     , current_user_name = Nothing
-    , fetching_messages = False
     , fetching_messages_scroll_pos = Just 0
     }

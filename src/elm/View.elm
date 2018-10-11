@@ -4,13 +4,14 @@ module View exposing (view)
 
 import Dict
 import Html exposing (Html, button, div, dl, footer, header, input, span, text, form)
-import Html.Attributes exposing (attribute, class, maxlength, name, placeholder, title, value, property, id)
+import Html.Attributes exposing (attribute, class, maxlength, name, placeholder, title, value, property, id, disabled)
 import Html.Events exposing (onClick, onInput, onSubmit, on)
 import Models exposing (Model)
 import Msgs exposing (Msg)
 import Json.Decode
 import Json.Encode
 import Ports
+import Maybe.Extra
 
 
 view : Model -> Html Msg
@@ -93,10 +94,12 @@ newMessageForm model =
             model.current_user_name
             |> Maybe.map (\name -> name ++ ": Type your message here")
             |> Maybe.withDefault "Unable to connect to Planga Chat"
+        is_disabled =
+            Maybe.Extra.isNothing model.current_user_name
     in
       form [ class "planga--new-message-form" , onSubmit (Msgs.SendMessage model.draft_message)]
           [ div [ class "planga--new-message-field-wrapper" ]
-              [ input [ maxlength 4096, placeholder placeholder_value, name "planga-new-message-field", class "planga--new-message-field", onInput Msgs.ChangeDraftMessage, value model.draft_message ] []
+              [ input [ maxlength 4096, placeholder placeholder_value, name "planga-new-message-field", class "planga--new-message-field", onInput Msgs.ChangeDraftMessage, value model.draft_message, disabled is_disabled ] []
               ]
           , button [ class "planga--new-message-submit-button"]
               [ text "Send"
