@@ -122,7 +122,7 @@ update msg model =
                             , overridden_scroll_height = new_scroll_height
                             , oldest_timestamp = oldest_timestamp
                           }
-                        , Scroll.toBottomY "planga--chat-messages" (model.fetching_messages_scroll_pos ) |> Task.attempt (Msgs.UnlockScrollHeight)
+                        , Scroll.toBottomY "planga--chat-messages" (model.fetching_messages_scroll_pos ) |> Task.attempt (always (Msgs.ScrollMsg Msgs.UnlockScrollHeight))
                         )
 
                     Err error ->
@@ -131,33 +131,33 @@ update msg model =
         Msgs.ChangeDraftMessage new_draft_message ->
             ( { model | draft_message = new_draft_message }, Cmd.none )
 
-        Msgs.ScrollUpdate event ->
-            let
-                command =
-                    Scroll.y "planga--chat-messages"
-                        |> Task.andThen (\a -> Scroll.bottomY "planga--chat-messages" |> Task.map (\b -> (a, b)))
-                        |> Task.attempt Msgs.ScrollHeightCalculated
-            in
-            ( model, command )
+        Msgs.ScrollMsg scroll_msg ->
+            case scroll_msg of
+              Msgs.ScrollTopChanged ->
+                  let
+                      command =
+                          Scroll.y "planga--chat-messages"
+                              |> Task.andThen (\a -> Scroll.bottomY "planga--chat-messages" |> Task.map (\b -> (a, b)))
+                              |> Task.attempt Msgs.ScrollHeightCalculated
+                  in
+                  ( model, Cmd.map Msgs.ScrollMsg command )
 
-        Msgs.ScrollHeightCalculated val ->
-            -- TODO: Debounce
-            case val of
-                Err _ ->
-                    ( model, Cmd.none )
+              Msgs.ScrollHeightCalculated val ->
+                  -- TODO: Debounce
+                  case val of
+                      Err _ ->
+                          ( model, Cmd.none )
 
-                Ok (scroll_top, scroll_bottom) ->
-                    if scroll_top < 50 && model.fetching_messages == False then
-                        fetchOldMessages model scroll_bottom
+                      Ok (scroll_top, scroll_bottom) ->
+                          if scroll_top < 50 && model.fetching_messages == False then
+                              fetchOldMessages model scroll_bottom
 
-                    else
-                        Debug.log "Doing nothing, not high enough scrolled" <|
-                            ( model, Cmd.none )
+                          else
+                              Debug.log "Doing nothing, not high enough scrolled" <|
+                                  ( model, Cmd.none )
 
-        Msgs.FetchingMessagesFailed _ ->
-            ( { model | fetching_messages = False }, Cmd.none )
-        Msgs.UnlockScrollHeight _ ->
-            ( { model | fetching_messages = False}, Cmd.none )
+              Msgs.UnlockScrollHeight ->
+                  ( { model | fetching_messages = False}, Cmd.none )
 
 
 fetchOldMessages model scroll_bottom =
@@ -176,7 +176,7 @@ fetchOldMessages model scroll_bottom =
                     push_data =
                         Phoenix.Push.init "load_old_messages" model.channel_name
                             |> Phoenix.Push.withPayload constructed_message
-                            |> Phoenix.Push.onError Msgs.FetchingMessagesFailed
+                            |> Phoenix.Push.onError (always (Msgs.ScrollMsg Msgs.UnlockScrollHeight))
 
                     ( phoenix_socket, phoenix_command ) =
                         Phoenix.Socket.push push_data model.phoenix_socket

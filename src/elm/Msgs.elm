@@ -1,8 +1,13 @@
-module Msgs exposing (Msg(..))
+module Msgs exposing (Msg(..), ScrollMsg(..))
 import Phoenix.Socket
 import Json.Decode as JD
 import Scroll
 import Dom
+
+type ScrollMsg
+    = ScrollTopChanged
+    | ScrollHeightCalculated (Result Dom.Error (Float, Float))
+    | UnlockScrollHeight
 
 type Msg
     = NoOp
@@ -15,7 +20,4 @@ type Msg
     | ReceiveMessage JD.Value
     | MessagesSoFar JD.Value
     | ChangeDraftMessage String
-    | ScrollUpdate JD.Value
-    | ScrollHeightCalculated (Result Dom.Error (Float, Float))
-    | FetchingMessagesFailed JD.Value
-    | UnlockScrollHeight (Result Dom.Error ())
+    | ScrollMsg ScrollMsg

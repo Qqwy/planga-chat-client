@@ -36,11 +36,7 @@ container model =
         ]
 
 onScrollFetchScrollInfo =
-    on "scroll" (Json.Decode.value |> Json.Decode.map Msgs.ScrollUpdate)
-    -- on "scroll"
-
-onLoadFetchScrollInfo =
-    on "load" (Json.Decode.value |> Json.Decode.map Msgs.ScrollUpdate)
+    on "scroll" (Json.Decode.value |> Json.Decode.map (always (Msgs.ScrollMsg Msgs.ScrollTopChanged)))
 
 scrollHeight height =
     property "scrollTop" (Json.Encode.int height)
@@ -56,7 +52,7 @@ messages model =
             message_list
                 |> List.map (message model.current_user_name)
     in
-    dl [ class "planga--chat-messages", id "planga--chat-messages", onScrollFetchScrollInfo, onLoadFetchScrollInfo]
+    dl [ class "planga--chat-messages", id "planga--chat-messages", onScrollFetchScrollInfo]
         messages_html
 
 

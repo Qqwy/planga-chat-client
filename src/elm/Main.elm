@@ -10,7 +10,6 @@ import Scroll
 import Update
 import View
 import Ports
-import BrowserFuture
 import Dom.Scroll
 import Task
 
@@ -34,7 +33,6 @@ init flags =
     in
     model
         |> parseFlags flags
-        |> BrowserFuture.log "Native code test"
 
 
 userParams : String -> String -> JE.Value
