@@ -1,4 +1,4 @@
-module Models exposing (Model, chatMessageDecoder, initialModel, ScrollInfo, scrollInfoDecoder)
+module Models exposing (Model, chatMessageDecoder, initialModel)
 
 import Base64
 import Dict exposing (Dict)
@@ -21,10 +21,8 @@ type alias Model =
     , encrypted_options : String
     , public_api_id : String
     , current_user_name : Maybe String
-    , scroll_info : ScrollInfo
-    , overridden_scroll_height : Int
     , fetching_messages : Bool
-    , fetching_messages_scroll_pos : Float
+    , fetching_messages_scroll_pos : Maybe Float
     }
 
 
@@ -44,26 +42,6 @@ chatMessageDecoder =
         (JD.field "sent_at" JD.string)
 
 
-type alias ScrollInfo =
-    { scrollLeft : Int
-    , scrollTop : Int
-    , scrollWidth : Int
-    , scrollHeight : Int
-    }
-
-
-scrollInfoDecoder =
-    JD.map4 ScrollInfo
-        (JD.field "scrollLeft" JD.int)
-        (JD.field "scrollTop" JD.int)
-        (JD.field "scrollWidth" JD.int)
-        (JD.field "scrollHeight" JD.int)
-
-
-initialScrollInfo =
-    ScrollInfo 0 0 0 0
-
-
 channelName : String -> String -> String
 channelName public_api_id encrypted_options =
     "encrypted_chat:" ++ Base64.encode public_api_id ++ "#" ++ Base64.encode encrypted_options
@@ -80,8 +58,6 @@ initialModel public_api_id encrypted_options socket_location =
     , public_api_id = public_api_id
     , socket_location = socket_location
     , current_user_name = Nothing
-    , scroll_info = initialScrollInfo
-    , overridden_scroll_height = 1000000
     , fetching_messages = False
-    , fetching_messages_scroll_pos = 0
+    , fetching_messages_scroll_pos = Just 0
     }

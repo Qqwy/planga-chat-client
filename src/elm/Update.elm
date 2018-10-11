@@ -10,8 +10,9 @@ import Msgs exposing (Msg)
 import Phoenix.Push
 import Phoenix.Socket
 import Ports
-import Task
 import Scroll
+import Task
+import Maybe.Extra
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -96,6 +97,14 @@ update msg model =
             let
                 messagesDecoder =
                     JD.field "messages" (JD.list Models.chatMessageDecoder)
+
+                fix_scroll_pos =
+                    case model.fetching_messages_scroll_pos of
+                        Nothing ->
+                            Cmd.none
+                        Just scroll_pos ->
+                            Scroll.toBottomY "planga--chat-messages" scroll_pos
+                                |> Task.attempt (always (Msgs.ScrollMsg Msgs.UnlockScrollHeight))
             in
             Debug.log ("Receiving old messages!" ++ toString messages_json) <|
                 case JD.decodeValue messagesDecoder messages_json of
@@ -110,87 +119,83 @@ update msg model =
                                 model.messages
                                     |> Dict.union new_messages
 
-                            new_scroll_height =
-                                model.scroll_info.scrollHeight - model.scroll_info.scrollTop
-
                             oldest_timestamp =
                                 model.oldest_timestamp
                                     |> minimumMaybe (List.minimum (List.map .sent_at chat_messages))
                         in
                         ( { model
                             | messages = updated_messages
-                            , overridden_scroll_height = new_scroll_height
                             , oldest_timestamp = oldest_timestamp
                           }
-                        , Scroll.toBottomY "planga--chat-messages" (model.fetching_messages_scroll_pos ) |> Task.attempt (always (Msgs.ScrollMsg Msgs.UnlockScrollHeight))
+                        , fix_scroll_pos
                         )
 
                     Err error ->
-                        ( model, Scroll.toBottomY "planga--chat-messages" model.fetching_messages_scroll_pos |> Task.attempt (toString >> Msgs.Debug) )
+                        ( model, fix_scroll_pos )
 
         Msgs.ChangeDraftMessage new_draft_message ->
             ( { model | draft_message = new_draft_message }, Cmd.none )
 
         Msgs.ScrollMsg scroll_msg ->
-            case scroll_msg of
-              Msgs.ScrollTopChanged ->
-                  let
-                      command =
-                          Scroll.y "planga--chat-messages"
-                              |> Task.andThen (\a -> Scroll.bottomY "planga--chat-messages" |> Task.map (\b -> (a, b)))
-                              |> Task.attempt Msgs.ScrollHeightCalculated
-                  in
-                  ( model, Cmd.map Msgs.ScrollMsg command )
-
-              Msgs.ScrollHeightCalculated val ->
-                  -- TODO: Debounce
-                  case val of
-                      Err _ ->
-                          ( model, Cmd.none )
-
-                      Ok (scroll_top, scroll_bottom) ->
-                          if scroll_top < 50 && model.fetching_messages == False then
-                              fetchOldMessages model scroll_bottom
-
-                          else
-                              Debug.log "Doing nothing, not high enough scrolled" <|
-                                  ( model, Cmd.none )
-
-              Msgs.UnlockScrollHeight ->
-                  ( { model | fetching_messages = False}, Cmd.none )
+            updateScrollMsg model scroll_msg
 
 
+updateScrollMsg : Model -> Msgs.ScrollMsg -> ( Model, Cmd Msgs.Msg )
+updateScrollMsg model scroll_msg =
+    case scroll_msg of
+        Msgs.ScrollTopChanged ->
+            let
+                fetch_scroll_pos =
+                    Task.map2 (\top bottom -> ( top, bottom ))
+                        (Scroll.y "planga--chat-messages")
+                        (Scroll.bottomY "planga--chat-messages")
+                        |> Task.attempt Msgs.ScrollHeightCalculated
+            in
+            ( model, Cmd.map Msgs.ScrollMsg fetch_scroll_pos )
+
+        Msgs.ScrollHeightCalculated val ->
+            case val of
+                Err _ ->
+                    ( model, Cmd.none )
+
+                Ok ( scroll_top, scroll_bottom ) ->
+                    if scroll_top < 50 && Maybe.Extra.isNothing model.fetching_messages_scroll_pos then
+                        fetchOldMessages model scroll_bottom
+
+                    else
+                        ( model, Cmd.none )
+
+        Msgs.UnlockScrollHeight ->
+            ( { model | fetching_messages_scroll_pos = Nothing }, Cmd.none )
+
+
+fetchOldMessages : Model -> Float -> ( Model, Cmd Msgs.Msg )
 fetchOldMessages model scroll_bottom =
     case model.oldest_timestamp of
         Nothing ->
             ( model, Cmd.none )
 
         Just oldest_timestamp ->
-            Debug.log "Sending Message!" <|
-                let
-                    constructed_message =
-                        JE.object
-                            [ ( "sent_before", JE.string oldest_timestamp )
-                            ]
+            let
+                payload =
+                    JE.object
+                        [ ( "sent_before", JE.string oldest_timestamp )
+                        ]
 
-                    push_data =
-                        Phoenix.Push.init "load_old_messages" model.channel_name
-                            |> Phoenix.Push.withPayload constructed_message
-                            |> Phoenix.Push.onError (always (Msgs.ScrollMsg Msgs.UnlockScrollHeight))
+                push_data =
+                    Phoenix.Push.init "load_old_messages" model.channel_name
+                        |> Phoenix.Push.withPayload payload
+                        |> Phoenix.Push.onError (always (Msgs.ScrollMsg Msgs.UnlockScrollHeight))
 
-                    ( phoenix_socket, phoenix_command ) =
-                        Phoenix.Socket.push push_data model.phoenix_socket
-                in
-                ( { model
-                    | phoenix_socket = phoenix_socket
-                    , fetching_messages = True
-                    , fetching_messages_scroll_pos = scroll_bottom
-                  }
-                , Cmd.batch
-                    [ Cmd.map Msgs.PhoenixMsg phoenix_command
-                    , Ports.keepVScrollPos
-                    ]
-                )
+                ( phoenix_socket, phoenix_command ) =
+                    Phoenix.Socket.push push_data model.phoenix_socket
+            in
+            ( { model
+                | phoenix_socket = phoenix_socket
+                , fetching_messages_scroll_pos = Just scroll_bottom
+              }
+            , Cmd.map Msgs.PhoenixMsg phoenix_command
+            )
 
 
 minimumMaybe : Maybe String -> Maybe String -> Maybe String
