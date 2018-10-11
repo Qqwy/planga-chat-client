@@ -78,8 +78,6 @@ setupConnection model =
 
 
 
--- (model, Cmd.none)
-
 
 parseFlags : String -> Model -> ( Model, Cmd Msg )
 parseFlags flags model =

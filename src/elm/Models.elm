@@ -1,4 +1,4 @@
-module Models exposing (Model, chatMessageDecoder, initialModel)
+module Models exposing (Model, chatMessageDecoder, initialModel, uniqueMessagesContainerId)
 
 import Base64
 import Dict exposing (Dict)
@@ -59,3 +59,5 @@ initialModel public_api_id encrypted_options socket_location =
     , current_user_name = Nothing
     , fetching_messages_scroll_pos = Just 0
     }
+
+uniqueMessagesContainerId model = "planga--chat-messages/" ++ model.encrypted_options

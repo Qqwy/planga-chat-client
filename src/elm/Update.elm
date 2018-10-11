@@ -5,7 +5,7 @@ import Dict
 import Dom.Scroll
 import Json.Decode as JD
 import Json.Encode as JE
-import Models exposing (Model)
+import Models exposing (Model, uniqueMessagesContainerId)
 import Msgs exposing (Msg)
 import Phoenix.Push
 import Phoenix.Socket
@@ -103,7 +103,7 @@ update msg model =
                         Nothing ->
                             Cmd.none
                         Just scroll_pos ->
-                            Scroll.toBottomY "planga--chat-messages" scroll_pos
+                            Scroll.toBottomY (uniqueMessagesContainerId model) scroll_pos
                                 |> Task.attempt (always (Msgs.ScrollMsg Msgs.UnlockScrollHeight))
             in
             Debug.log ("Receiving old messages!" ++ toString messages_json) <|
@@ -147,8 +147,8 @@ updateScrollMsg model scroll_msg =
             let
                 fetch_scroll_pos =
                     Task.map2 (\top bottom -> ( top, bottom ))
-                        (Scroll.y "planga--chat-messages")
-                        (Scroll.bottomY "planga--chat-messages")
+                        (Scroll.y (Models.uniqueMessagesContainerId model))
+                        (Scroll.bottomY (Models.uniqueMessagesContainerId model))
                         |> Task.attempt Msgs.ScrollHeightCalculated
             in
             ( model, Cmd.map Msgs.ScrollMsg fetch_scroll_pos )
