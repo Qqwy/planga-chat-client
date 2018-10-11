@@ -11,6 +11,7 @@ import Phoenix.Push
 import Phoenix.Socket
 import Ports
 import Task
+import Scroll
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -118,15 +119,14 @@ update msg model =
                         in
                         ( { model
                             | messages = updated_messages
-                            , fetching_messages = False
                             , overridden_scroll_height = new_scroll_height
                             , oldest_timestamp = oldest_timestamp
                           }
-                        , Dom.Scroll.toBottom "planga--chat-messages" |> Task.attempt (toString >> Msgs.Debug)
+                        , Scroll.toBottomY "planga--chat-messages" (model.fetching_messages_scroll_pos ) |> Task.attempt (Msgs.UnlockScrollHeight)
                         )
 
                     Err error ->
-                        ( model, Dom.Scroll.toBottom "planga--chat-messages" |> Task.attempt (toString >> Msgs.Debug) )
+                        ( model, Scroll.toBottomY "planga--chat-messages" model.fetching_messages_scroll_pos |> Task.attempt (toString >> Msgs.Debug) )
 
         Msgs.ChangeDraftMessage new_draft_message ->
             ( { model | draft_message = new_draft_message }, Cmd.none )
@@ -134,7 +134,8 @@ update msg model =
         Msgs.ScrollUpdate event ->
             let
                 command =
-                    Dom.Scroll.y "planga--chat-messages"
+                    Scroll.y "planga--chat-messages"
+                        |> Task.andThen (\a -> Scroll.bottomY "planga--chat-messages" |> Task.map (\b -> (a, b)))
                         |> Task.attempt Msgs.ScrollHeightCalculated
             in
             ( model, command )
@@ -145,9 +146,9 @@ update msg model =
                 Err _ ->
                     ( model, Cmd.none )
 
-                Ok scrollTop ->
-                    if scrollTop < 50 && model.fetching_messages == False then
-                        fetchOldMessages model
+                Ok (scroll_top, scroll_bottom) ->
+                    if scroll_top < 50 && model.fetching_messages == False then
+                        fetchOldMessages model scroll_bottom
 
                     else
                         Debug.log "Doing nothing, not high enough scrolled" <|
@@ -155,9 +156,11 @@ update msg model =
 
         Msgs.FetchingMessagesFailed _ ->
             ( { model | fetching_messages = False }, Cmd.none )
+        Msgs.UnlockScrollHeight _ ->
+            ( { model | fetching_messages = False}, Cmd.none )
 
 
-fetchOldMessages model =
+fetchOldMessages model scroll_bottom =
     case model.oldest_timestamp of
         Nothing ->
             ( model, Cmd.none )
@@ -178,7 +181,11 @@ fetchOldMessages model =
                     ( phoenix_socket, phoenix_command ) =
                         Phoenix.Socket.push push_data model.phoenix_socket
                 in
-                ( { model | phoenix_socket = phoenix_socket, fetching_messages = True }
+                ( { model
+                    | phoenix_socket = phoenix_socket
+                    , fetching_messages = True
+                    , fetching_messages_scroll_pos = scroll_bottom
+                  }
                 , Cmd.batch
                     [ Cmd.map Msgs.PhoenixMsg phoenix_command
                     , Ports.keepVScrollPos

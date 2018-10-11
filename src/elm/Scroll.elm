@@ -1,183 +1,127 @@
-effect module Scroll where { subscription = MySub } exposing (Position, scroll)
-{-|
-Based on the library 'https://github.com/danabrams/elm-scroll'
+module Scroll exposing
+  ( toTop, toBottom, y, toY
+  , toLeft, toRight, x, toX
+  , toBottomY, bottomY
+  )
 
-This library lets you listen to scroll events. It'll help you create pages
-that respond to scrolling, such as a page that has a header that becomes sticky when
-you start scrolling.
+{-| When you set `overflow-y: scroll` on an element, a scroll bar will appear
+when the content overflows the available space. When that happens, you may want
+to modify the scroll position yourself. For example, maybe you have a chat room
+that autoscrolls as new messages come in. This module provides functions like
+`Scroll.Scroll.toBottom` that let you do that kind of thing.
 
-It uses no native code, other than the Native code provide by Elm-Lang.
+# Vertical
+@docs toTop, toBottom, y, toY
 
-
-# Scroll Position
-
-@docs Position
-
-
-# Subscriptions
-
-@docs scroll
+# Horizontal
+@docs toLeft, toRight, x, toX
 
 -}
 
-import Dict
-import Dom.LowLevel as Dom
-import Json.Decode as Json
-import Process
+import Dom exposing (Error, Id)
+import Native.Scroll
 import Task exposing (Task)
 
 
--- POSITIONS
+
+-- VERTICAL
 
 
-{-| The Scroll Position of the window. _x_ is scrollX, _y_ is scrollY
+{-| Find the node with the given `Id` and scroll it to the top.
+
+So `toTop id` is the same as `toY id 0`.
 -}
-type alias Position =
-    { x : Int
-    , y : Int
-    }
+toTop : Id -> Task Error ()
+toTop id =
+  toY id 0
 
 
-{-| The decoder used to extract a `Position` from a JavaScript scroll event.
+{-| Find the node with the given `Id` and scroll it to the bottom.
 -}
-position : Json.Decoder Position
-position =
-    Json.map2 Position
-        (Json.at [ "target", "defaultView", "scrollX" ] Json.int)
-        (Json.at [ "target", "defaultView", "scrollY" ] Json.int)
+toBottom : Id -> Task Error ()
+toBottom =
+  Native.Scroll.toBottom
+
+
+{-| How much this element is scrolled vertically.
+
+Say you have a node that does not fit in its container. A scroll bar shows up.
+Initially you are at the top, which means `y` is `0`. If you scroll down 300
+pixels, `y` will be `300`.
+
+This is roughly the same as saying [`document.getElementById(id).scrollTop`][docs].
+
+[docs]: https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollTop
+-}
+y : Id -> Task Error Float
+y =
+  Native.Scroll.getScrollTop
+
+bottomY : Id -> Task Error Float
+bottomY = Native.Scroll.getScrollBottom
+
+
+{-| Set the vertical scroll to whatever offset you want.
+
+Imagine you have a chat room and you want to control how it scrolls. Say the
+full chat is 400 pixels long, but it is in a box that limits the visible height
+to 100 pixels.
+
+  - If we say `toY "chat" 0` it will scroll to the very top.
+  - If we say `toY "chat" 300` it will be at the bottom.
+
+If we provide values outside that range, they just get clamped, so
+`toY "chat" 900` is also scrolled to the bottom.
+-}
+toY : Id -> Float -> Task Error ()
+toY =
+  Native.Scroll.setScrollTop
+
+
+toBottomY : Id -> Float -> Task Error ()
+toBottomY =
+  Native.Scroll.setScrollBottom
 
 
 
--- SCROLL EVENTS
+-- HORIZONTAL
 
 
-{-| -}
-scroll : (Position -> msg) -> Sub msg
-scroll tagger =
-    subscription (MySub "scroll" tagger)
+{-| Find the node with the given `Id` and scroll it to the far left.
+
+So `toLeft id` is the same as `toX id 0`.
+-}
+toLeft : Id -> Task Error ()
+toLeft id =
+  toX id 0
 
 
-
--- SUBSCRIPTIONS
-
-
-type MySub msg
-    = MySub String (Position -> msg)
-
-
-subMap : (a -> b) -> MySub a -> MySub b
-subMap func (MySub category tagger) =
-    MySub category (tagger >> func)
+{-| Find the node with the given `Id` and scroll it to the far right.
+-}
+toRight : Id -> Task Error ()
+toRight =
+  Native.Scroll.toRight
 
 
+{-| How much this element is scrolled horizontally.
 
--- EFFECT MANAGER STATE
+Say you have a node that does not fit in its container. A scroll bar shows up.
+Initially you are at the far left, which means `x` is `0`. If you scroll right
+300 pixels, `x` will be `300`.
 
+This is roughly the same as saying [`document.getElementById(id).scrollLeft`][docs].
 
-type alias State msg =
-    Dict.Dict String (Watcher msg)
-
-
-type alias Watcher msg =
-    { taggers : List (Position -> msg)
-    , pid : Process.Id
-    }
-
-
-
--- CATEGORIZE SUBSCRIPTIONS
+[docs]: https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollLeft
+-}
+x : Id -> Task Error Float
+x =
+  Native.Scroll.getScrollLeft
 
 
-type alias SubDict msg =
-    Dict.Dict String (List (Position -> msg))
+{-| Set the horizontal scroll to whatever offset you want.
 
-
-categorize : List (MySub msg) -> SubDict msg
-categorize subs =
-    categorizeHelp subs Dict.empty
-
-
-categorizeHelp : List (MySub msg) -> SubDict msg -> SubDict msg
-categorizeHelp subs subDict =
-    case subs of
-        [] ->
-            subDict
-
-        (MySub category tagger) :: rest ->
-            categorizeHelp rest <|
-                Dict.update category (categorizeHelpHelp tagger) subDict
-
-
-categorizeHelpHelp : a -> Maybe (List a) -> Maybe (List a)
-categorizeHelpHelp value maybeValues =
-    case maybeValues of
-        Nothing ->
-            Just [ value ]
-
-        Just values ->
-            Just (value :: values)
-
-
-
--- EFFECT MANAGER
-
-
-init : Task Never (State msg)
-init =
-    Task.succeed Dict.empty
-
-
-type alias Msg =
-    { category : String
-    , position : Position
-    }
-
-
-(&>) t1 t2 =
-    Task.andThen (\_ -> t2) t1
-
-
-onEffects : Platform.Router msg Msg -> List (MySub msg) -> State msg -> Task Never (State msg)
-onEffects router newSubs oldState =
-    let
-        leftStep category { pid } task =
-            Process.kill pid &> task
-
-        bothStep category { pid } taggers task =
-            task
-                |> Task.andThen (\state -> Task.succeed (Dict.insert category (Watcher taggers pid) state))
-
-        rightStep category taggers task =
-            let
-                tracker =
-                    Dom.onWindow category position (Platform.sendToSelf router << Msg category)
-            in
-            task
-                |> Task.andThen
-                    (\state ->
-                        Process.spawn tracker
-                            |> Task.andThen (\pid -> Task.succeed (Dict.insert category (Watcher taggers pid) state))
-                    )
-    in
-    Dict.merge
-        leftStep
-        bothStep
-        rightStep
-        oldState
-        (categorize newSubs)
-        (Task.succeed Dict.empty)
-
-
-onSelfMsg : Platform.Router msg Msg -> Msg -> State msg -> Task Never (State msg)
-onSelfMsg router { category, position } state =
-    case Dict.get category state of
-        Nothing ->
-            Task.succeed state
-
-        Just { taggers } ->
-            let
-                send tagger =
-                    Platform.sendToApp router (tagger position)
-            in
-            Task.sequence (List.map send taggers)
-                &> Task.succeed state
+It works just like `toY`, so check out those docs for a more complete example.
+-}
+toX : Id -> Float -> Task Error ()
+toX =
+  Native.Scroll.setScrollLeft

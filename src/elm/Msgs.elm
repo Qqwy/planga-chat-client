@@ -16,5 +16,6 @@ type Msg
     | MessagesSoFar JD.Value
     | ChangeDraftMessage String
     | ScrollUpdate JD.Value
-    | ScrollHeightCalculated (Result Dom.Error Float)
+    | ScrollHeightCalculated (Result Dom.Error (Float, Float))
     | FetchingMessagesFailed JD.Value
+    | UnlockScrollHeight (Result Dom.Error ())

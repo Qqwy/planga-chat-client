@@ -24,6 +24,7 @@ type alias Model =
     , scroll_info : ScrollInfo
     , overridden_scroll_height : Int
     , fetching_messages : Bool
+    , fetching_messages_scroll_pos : Float
     }
 
 
@@ -82,4 +83,5 @@ initialModel public_api_id encrypted_options socket_location =
     , scroll_info = initialScrollInfo
     , overridden_scroll_height = 1000000
     , fetching_messages = False
+    , fetching_messages_scroll_pos = 0
     }
