@@ -23,6 +23,7 @@ type alias Model =
     , current_user_name : Maybe String
     , scroll_info : ScrollInfo
     , overridden_scroll_height : Int
+    , fetching_messages : Bool
     }
 
 
@@ -80,4 +81,5 @@ initialModel public_api_id encrypted_options socket_location =
     , current_user_name = Nothing
     , scroll_info = initialScrollInfo
     , overridden_scroll_height = 1000000
+    , fetching_messages = False
     }

@@ -2,10 +2,11 @@ module Msgs exposing (Msg(..))
 import Phoenix.Socket
 import Json.Decode as JD
 import Scroll
+import Dom
 
 type Msg
     = NoOp
-    | Debug JD.Value
+    | Debug String
     | PhoenixMsg (Phoenix.Socket.Msg Msg)
     | ShowJoinedMessage JD.Value
     | ShowErrorMessage
@@ -15,5 +16,5 @@ type Msg
     | MessagesSoFar JD.Value
     | ChangeDraftMessage String
     | ScrollUpdate JD.Value
-    | ScrollHeightCalculated JD.Value
-
+    | ScrollHeightCalculated (Result Dom.Error Float)
+    | FetchingMessagesFailed JD.Value

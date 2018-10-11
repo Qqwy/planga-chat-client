@@ -11,6 +11,8 @@ import Update
 import View
 import Ports
 import BrowserFuture
+import Dom.Scroll
+import Task
 
 
 init : String -> ( Model, Cmd Msg )
@@ -69,7 +71,12 @@ setupConnection model =
                 |> Phoenix.Socket.on "messages_so_far" model.channel_name Msgs.MessagesSoFar
                 |> Phoenix.Socket.join channel
     in
-    ( { model | phoenix_socket = phoenix_socket }, Cmd.map Msgs.PhoenixMsg phoenix_cmd )
+    ( { model | phoenix_socket = phoenix_socket },
+          Cmd.batch [
+               Cmd.map Msgs.PhoenixMsg phoenix_cmd
+              , Dom.Scroll.toBottom "planga--chat-messages" |> Task.attempt (toString >> Msgs.Debug)
+              ]
+              )
 
 
 
@@ -86,7 +93,7 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
         [ Phoenix.Socket.listen model.phoenix_socket Msgs.PhoenixMsg
-        , Ports.scrollUpdate Msgs.ScrollHeightCalculated
+        -- , Ports.scrollUpdate Msgs.ScrollHeightCalculated
         ]
 
 

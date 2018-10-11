@@ -4,7 +4,7 @@ module View exposing (view)
 
 import Dict
 import Html exposing (Html, button, div, dl, footer, header, input, span, text, form)
-import Html.Attributes exposing (attribute, class, maxlength, name, placeholder, title, value, property)
+import Html.Attributes exposing (attribute, class, maxlength, name, placeholder, title, value, property, id)
 import Html.Events exposing (onClick, onInput, onSubmit, on)
 import Models exposing (Model)
 import Msgs exposing (Msg)
@@ -30,13 +30,14 @@ data name val =
 
 
 container model =
-    div [ class "planga--chat-container" ]
+    div [ class "planga--chat-container"]
         [ messages model
         , newMessageForm model
         ]
 
 onScrollFetchScrollInfo =
     on "scroll" (Json.Decode.value |> Json.Decode.map Msgs.ScrollUpdate)
+    -- on "scroll"
 
 onLoadFetchScrollInfo =
     on "load" (Json.Decode.value |> Json.Decode.map Msgs.ScrollUpdate)
@@ -55,7 +56,7 @@ messages model =
             message_list
                 |> List.map (message model.current_user_name)
     in
-    dl [ class "planga--chat-messages", onScrollFetchScrollInfo, onLoadFetchScrollInfo]
+    dl [ class "planga--chat-messages", id "planga--chat-messages", onScrollFetchScrollInfo, onLoadFetchScrollInfo]
         messages_html
 
 

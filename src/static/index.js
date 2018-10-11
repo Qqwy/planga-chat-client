@@ -22,35 +22,35 @@ app.ports.scrollToBottomPort.subscribe(function(_){
 
 var vScrollStickInterval;
 
-app.ports.keepVScrollPosPort.subscribe(function(_){
-    if(vScrollStickInterval !== null) {
-        return;
-    }
-    let elem  = wrapper_elem.getElementsByClassName("planga--chat-messages")[0];
-    let pos = elem.scrollHeight - elem.scrollTop;
-    console.log(elem, pos);
-    vScrollStickInterval = window.setInterval(function(){
-        let elem  = wrapper_elem.getElementsByClassName("planga--chat-messages")[0];
-        console.log("SCROLL FIX", elem, pos);
-        elem.scrollTop = elem.scrollHeight - pos;
-    }, 100);
-});
-app.ports.unlockVScrollPosPort.subscribe(function(_){
-    window.clearInterval(vScrollStickInterval);
-});
+// app.ports.keepVScrollPosPort.subscribe(function(_){
+//     if(vScrollStickInterval !== null) {
+//         return;
+//     }
+//     let elem  = wrapper_elem.getElementsByClassName("planga--chat-messages")[0];
+//     let pos = elem.scrollHeight - elem.scrollTop;
+//     console.log(elem, pos);
+//     vScrollStickInterval = window.setInterval(function(){
+//         let elem  = wrapper_elem.getElementsByClassName("planga--chat-messages")[0];
+//         console.log("SCROLL FIX", elem, pos);
+//         elem.scrollTop = elem.scrollHeight - pos;
+//     }, 100);
+// });
+// app.ports.unlockVScrollPosPort.subscribe(function(_){
+//     window.clearInterval(vScrollStickInterval);
+// });
 
 window.setTimeout(function(){
-    let elem  = wrapper_elem.getElementsByClassName("planga--chat-messages")[0];
-    console.log(elem);
-    elem.scrollTop = 1000000;
-    sendScrollPosUpdate(elem);
+    // let elem  = wrapper_elem.getElementsByClassName("planga--chat-messages")[0];
+    // console.log(elem);
+    // elem.scrollTop = 1000000;
+    // sendScrollPosUpdate(elem);
 }, 1000);
 
 function sendScrollPosUpdate(target) {
-    app.ports.scrollUpdate.send({
-        scrollLeft:   target.scrollLeft,
-        scrollTop:    target.scrollTop,
-        scrollWidth:  target.scrollWidth,
-        scrollHeight: target.scrollHeight
-    });
+    // app.ports.scrollUpdate.send({
+    //     scrollLeft:   target.scrollLeft,
+    //     scrollTop:    target.scrollTop,
+    //     scrollWidth:  target.scrollWidth,
+    //     scrollHeight: target.scrollHeight
+    // });
 }
