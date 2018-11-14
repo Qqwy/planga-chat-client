@@ -103,8 +103,9 @@ update msg model =
                         Nothing ->
                             Cmd.none
                         Just scroll_pos ->
-                            Scroll.toBottomY (uniqueMessagesContainerId model) scroll_pos
-                                |> Task.attempt (always (Msgs.ScrollMsg Msgs.UnlockScrollHeight))
+                            Ports.keepVScrollPos
+                            -- Scroll.toBottomY (uniqueMessagesContainerId model) scroll_pos
+                            --     |> Task.attempt (always (Msgs.ScrollMsg Msgs.UnlockScrollHeight))
             in
             Debug.log ("Receiving old messages!" ++ toString messages_json) <|
                 case JD.decodeValue messagesDecoder messages_json of
@@ -129,6 +130,7 @@ update msg model =
                               ( { model
                                   | messages = updated_messages
                                   , oldest_timestamp = oldest_timestamp
+                                    , fetching_messages_scroll_pos = Nothing
                                 }
                               , fix_scroll_pos
                               )
@@ -168,6 +170,7 @@ updateScrollMsg model scroll_msg =
                     else
                         ( model, Cmd.none )
 
+        -- DEPRECATED
         Msgs.UnlockScrollHeight ->
             ( { model | fetching_messages_scroll_pos = Nothing }, Cmd.none )
 
