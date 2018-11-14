@@ -123,12 +123,15 @@ update msg model =
                                 model.oldest_timestamp
                                     |> minimumMaybe (List.minimum (List.map .sent_at chat_messages))
                         in
-                        ( { model
-                            | messages = updated_messages
-                            , oldest_timestamp = oldest_timestamp
-                          }
-                        , fix_scroll_pos
-                        )
+                            if List.length chat_messages == 0 then
+                                (model, Cmd.none)
+                            else
+                              ( { model
+                                  | messages = updated_messages
+                                  , oldest_timestamp = oldest_timestamp
+                                }
+                              , fix_scroll_pos
+                              )
 
                     Err error ->
                         ( model, fix_scroll_pos )
@@ -159,7 +162,7 @@ updateScrollMsg model scroll_msg =
                     ( model, Cmd.none )
 
                 Ok ( scroll_top, scroll_bottom ) ->
-                    if scroll_top < 50 && Maybe.Extra.isNothing model.fetching_messages_scroll_pos then
+                    if scroll_top < 200 && Maybe.Extra.isNothing model.fetching_messages_scroll_pos then
                         fetchOldMessages model scroll_bottom
 
                     else
