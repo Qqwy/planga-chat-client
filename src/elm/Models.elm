@@ -1,4 +1,4 @@
-module Models exposing (Model, chatMessageDecoder, initialModel, uniqueMessagesContainerId)
+module Models exposing (Model, Options, chatMessageDecoder, initialModel, optionsDecoder, uniqueMessagesContainerId)
 
 import Base64
 import Dict exposing (Dict)
@@ -34,6 +34,24 @@ type alias ChatMessage =
     }
 
 
+type alias Options =
+    { public_api_id : String
+    , encrypted_options : String
+    , socket_location : String
+    , debug : Bool
+    }
+
+
+optionsDecoder : JD.Decoder Options
+optionsDecoder =
+    JD.map4 Options
+        (JD.field "public_api_id" JD.string)
+        (JD.field "encrypted_options" JD.string)
+        (JD.field "socket_location" JD.string)
+        (JD.oneOf [ JD.field "debug" JD.bool, JD.succeed False ])
+
+
+chatMessageDecoder : JD.Decoder ChatMessage
 chatMessageDecoder =
     JD.map5 ChatMessage
         (JD.field "uuid" JD.string)
@@ -51,7 +69,7 @@ channelName public_api_id encrypted_options =
 initialModel : String -> String -> String -> Model
 initialModel public_api_id encrypted_options socket_location =
     { messages = Dict.empty
-    , oldest_timestamp  = Nothing
+    , oldest_timestamp = Nothing
     , draft_message = ""
     , channel_name = channelName public_api_id encrypted_options
     , phoenix_socket = Phoenix.Socket.init socket_location
@@ -62,4 +80,6 @@ initialModel public_api_id encrypted_options socket_location =
     , fetching_messages_scroll_pos = Just 0
     }
 
-uniqueMessagesContainerId model = "planga--chat-messages/" ++ model.encrypted_options
+
+uniqueMessagesContainerId model =
+    "planga--chat-messages/" ++ model.encrypted_options
