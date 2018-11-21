@@ -1,20 +1,25 @@
 <!DOCTYPE html>
 <html lang="en-us">
-  <head>
-    <meta charSet="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="author" content="WM & Rene"/>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/1.11.8/semantic.min.css"/>
-  </head>
-  <body>
-      <script type="application/json" id="cardsJson" >{"a": 1,"b":2,"c":3}</script>
-
-    <div id="main"></div>
-    <!-- The Elm script is added below by Webpack -->
-    <script>
-     window.addEventListener('load', function () {
-         new Planga("main", "");
-     });
-    </script>
-  </body>
+    <head>
+        <meta charSet="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="author" content="WM & Rene"/>
+        <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/1.11.8/semantic.min.css"/> -->
+        <style>
+         body {
+             padding: 1em;
+         }
+        </style>
+    </head>
+    <body>
+        <h1>Example Chat</h1>
+        <link href="//localhost:4000/css/chat-style-basic.css" rel="stylesheet">
+        <div id="main"></div>
+        <!-- The Elm script is added below by Webpack -->
+        <script>
+         window.addEventListener('load', function () {
+             new Planga("main", "");
+         });
+        </script>
+    </body>
 </html>

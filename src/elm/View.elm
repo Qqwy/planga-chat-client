@@ -9,6 +9,7 @@ import Html.Events exposing (on, onClick, onInput, onSubmit)
 import Json.Decode
 import Json.Encode
 import Maybe.Extra
+import ElmEscapeHtml
 import Models exposing (Model, uniqueMessagesContainerId)
 import Msgs exposing (Msg)
 import Ports
@@ -82,7 +83,7 @@ message current_user_name message =
             [ span [ class "planga--chat-author-name" ] [ text message.name ]
             , span [ class "planga--chat-message-separator" ] [ text ":   " ]
             ]
-        , div [ class "planga--chat-message-content" ] [ text message.content ]
+        , div [ class "planga--chat-message-content" ] [ text (ElmEscapeHtml.unescape message.content) ]
         ]
 
 
