@@ -30,15 +30,17 @@ type alias ChatMessage =
     , name : String
     , content : String
     , sent_at : String
+    , deleted_at : Maybe String
     }
 
 
 chatMessageDecoder =
-    JD.map4 ChatMessage
+    JD.map5 ChatMessage
         (JD.field "uuid" JD.string)
         (JD.field "name" JD.string)
         (JD.field "content" JD.string)
         (JD.field "sent_at" JD.string)
+        (JD.field "deleted_at" (JD.nullable JD.string))
 
 
 channelName : String -> String -> String

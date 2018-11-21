@@ -3,13 +3,13 @@ module View exposing (view)
 -- import Listings
 
 import Dict
-import Html exposing (Html, button, div, dl, footer, form, header, input, span, text)
+import ElmEscapeHtml
+import Html exposing (Html, button, div, dl, footer, form, header, input, span, text, em)
 import Html.Attributes exposing (attribute, class, disabled, id, maxlength, name, placeholder, property, title, value)
 import Html.Events exposing (on, onClick, onInput, onSubmit)
 import Json.Decode
 import Json.Encode
 import Maybe.Extra
-import ElmEscapeHtml
 import Models exposing (Model, uniqueMessagesContainerId)
 import Msgs exposing (Msg)
 import Ports
@@ -18,7 +18,7 @@ import Ports
 view : Model -> Html Msg
 view model =
     div []
-        [container model
+        [ container model
         ]
 
 
@@ -57,34 +57,44 @@ messages model =
 
 
 message current_user_name message =
-    let
-        message_class =
-            case current_user_name |> Maybe.map (\val -> val == message.name) of
-                Just True ->
-                    "planga--chat-message planga--chat-current-user-message"
+        let
+            is_current_user = 
+                case current_user_name |> Maybe.map (\val -> val == message.name) of
+                    Just True ->
+                        True
+                    _ ->
+                        False
+            is_deleted = message.deleted_at /= Nothing
 
-                _ ->
-                    "planga--chat-message"
-    in
-    div
-        [ class message_class
-        , data "message-sent-at" message.sent_at
-        , data "message-uuid" message.uuid
-        ]
-        [ div [ class "planga--chat-message-sent-at-wrapper" ]
-            [ span
-                [ class "planga--chat-message-sent-at"
-                , title message.sent_at
-                ]
-                [ text message.sent_at
-                ]
+            message_class =
+                "planga--chat-message"
+                ++ (if is_current_user then " planga--chat-current-user-message" else "")
+                    ++ (if is_deleted then " planga--chat-deleted-message" else "")
+            message_content =
+              if is_deleted then
+                  span [title ("Original message: " ++ message.content)] [text "This message was deleted"]
+              else
+                  text (ElmEscapeHtml.unescape message.content)
+        in
+        div
+            [ class message_class
+            , data "message-sent-at" message.sent_at
+            , data "message-uuid" message.uuid
             ]
-        , div [ class "planga--chat-author-wrapper" ]
-            [ span [ class "planga--chat-author-name" ] [ text message.name ]
-            , span [ class "planga--chat-message-separator" ] [ text ":   " ]
+            [ div [ class "planga--chat-message-sent-at-wrapper" ]
+                [ span
+                    [ class "planga--chat-message-sent-at"
+                    , title message.sent_at
+                    ]
+                    [ text message.sent_at
+                    ]
+                ]
+            , div [ class "planga--chat-author-wrapper" ]
+                [ span [ class "planga--chat-author-name" ] [ text message.name ]
+                , span [ class "planga--chat-message-separator" ] [ text ":   " ]
+                ]
+            , div [ class "planga--chat-message-content" ] [ message_content ]
             ]
-        , div [ class "planga--chat-message-content" ] [ text (ElmEscapeHtml.unescape message.content) ]
-        ]
 
 
 newMessageForm model =
