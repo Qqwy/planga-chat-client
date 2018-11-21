@@ -22,6 +22,7 @@ type alias Model =
     , public_api_id : String
     , current_user_name : Maybe String
     , fetching_messages_scroll_pos : Maybe Float
+    , debug_mode : Bool
     }
 
 
@@ -66,8 +67,8 @@ channelName public_api_id encrypted_options =
     "encrypted_chat:" ++ Base64.encode public_api_id ++ "#" ++ Base64.encode encrypted_options
 
 
-initialModel : String -> String -> String -> Model
-initialModel public_api_id encrypted_options socket_location =
+initialModel : String -> String -> String -> Bool -> Model
+initialModel public_api_id encrypted_options socket_location debug_mode =
     { messages = Dict.empty
     , oldest_timestamp = Nothing
     , draft_message = ""
@@ -78,6 +79,7 @@ initialModel public_api_id encrypted_options socket_location =
     , socket_location = socket_location
     , current_user_name = Nothing
     , fetching_messages_scroll_pos = Just 0
+    , debug_mode = debug_mode
     }
 
 

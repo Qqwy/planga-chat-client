@@ -31,7 +31,7 @@ init flags =
         --     "ws://localhost:4000/socket/websocket"
 
         model =
-            initialModel options.public_api_id options.encrypted_options (options.socket_location ++ "/websocket")
+            initialModel options.public_api_id options.encrypted_options (options.socket_location ++ "/websocket") options.debug
 
         -- initialModel "ws://phoenixchat.herokuapp.com/ws"
     in
@@ -71,7 +71,7 @@ setupConnection model =
 
         ( phoenix_socket, phoenix_cmd ) =
             model.phoenix_socket
-                |> Phoenix.Socket.withDebug
+                |> (\val -> if model.debug_mode then Phoenix.Socket.withDebug val else val)
                 |> Phoenix.Socket.on "new_remote_message" model.channel_name Msgs.ReceiveMessage
                 |> Phoenix.Socket.on "changed_message" model.channel_name Msgs.ChangedChatMessage
                 |> Phoenix.Socket.on "messages_so_far" model.channel_name Msgs.MessagesSoFar

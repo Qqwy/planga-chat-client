@@ -69,7 +69,6 @@ class Planga {
         });
 
         app.ports.sendBrowserNotification.subscribe(string => {
-            console.log(string);
             this.sendNotification(string);
         });
 
