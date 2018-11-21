@@ -17,13 +17,7 @@ import Ports
 view : Model -> Html Msg
 view model =
     div []
-        [ text "This is where the magic happens!"
-        , button [ onClick (Msgs.SendMessage "This is a message") ] [ text "Send!" ]
-        , text ("Username: " ++ toString model.current_user_name)
-        , text "Messages: "
-
-        -- , div [] [ text (toString model.messages) ]
-        , container model
+        [container model
         ]
 
 
