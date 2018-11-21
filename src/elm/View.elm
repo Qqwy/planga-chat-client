@@ -58,7 +58,7 @@ messages model =
 
 message current_user_name message =
         let
-            is_current_user = 
+            is_current_user =
                 case current_user_name |> Maybe.map (\val -> val == message.name) of
                     Just True ->
                         True
@@ -81,7 +81,12 @@ message current_user_name message =
             , data "message-sent-at" message.sent_at
             , data "message-uuid" message.uuid
             ]
-            [ div [ class "planga--chat-message-sent-at-wrapper" ]
+            [
+            div [class "planga--chat-message-options"]
+                    [
+                     span [] [text "×"]
+                    ]
+             , div [ class "planga--chat-message-sent-at-wrapper" ]
                 [ span
                     [ class "planga--chat-message-sent-at"
                     , title message.sent_at
