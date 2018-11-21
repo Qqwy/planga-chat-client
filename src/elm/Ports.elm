@@ -1,4 +1,4 @@
-port module Ports exposing (fetchScrollPos, keepVScrollPos, persistToStorage, scrollToBottom, scrollUpdate, unlockVScrollPos)
+port module Ports exposing (fetchScrollPos, keepVScrollPos, persistToStorage, scrollToBottom, scrollUpdate, unlockVScrollPos, sendBrowserNotification)
 
 import Json.Decode
 import Json.Encode
@@ -35,3 +35,5 @@ port unlockVScrollPosPort : () -> Cmd msg
 unlockVScrollPos : Cmd msg
 unlockVScrollPos =
     unlockVScrollPosPort ()
+
+port sendBrowserNotification : String -> Cmd msg

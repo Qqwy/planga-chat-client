@@ -85,7 +85,7 @@ update msg model =
                                 |> minimumMaybe (Just chatMessage.sent_at)
                     in
                     ( { model | messages = updated_messages, oldest_timestamp = oldest_timestamp }
-                    , Ports.scrollToBottom
+                    , Cmd.batch [Ports.scrollToBottom, Ports.sendBrowserNotification (chatMessage.name ++ ": " ++ chatMessage.content)]
                     )
 
         Msgs.ChangedChatMessage message_json ->
