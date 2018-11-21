@@ -16,15 +16,11 @@ class Planga {
         });
 
         app.ports.keepVScrollPosPort.subscribe(function(_){
-            console.log("TEST PORT");
             let elem  = wrapper_elem.getElementsByClassName("planga--chat-messages")[0];
             let scrollBottomPos = elem.scrollHeight - elem.scrollTop;
-            console.log(elem, elem.scrollTop, scrollBottomPos);
             window.requestAnimationFrame(function(){
                 let elem  = wrapper_elem.getElementsByClassName("planga--chat-messages")[0];
                 elem.scrollTop = elem.scrollHeight - scrollBottomPos;
-
-                console.log(elem, elem.scrollTop);
             });
 
         });

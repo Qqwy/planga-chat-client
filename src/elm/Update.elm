@@ -33,13 +33,11 @@ update msg model =
                 ( phoenix_socket, phoenix_command ) =
                     Phoenix.Socket.update msg model.phoenix_socket
             in
-            Debug.log "TEST" <|
                 ( { model | phoenix_socket = phoenix_socket }
                 , Cmd.map Msgs.PhoenixMsg phoenix_command
                 )
 
         Msgs.ShowJoinedMessage value ->
-            Debug.log ("Joined!" ++ toString value) <|
                 case JD.decodeValue (JD.field "current_user_name" JD.string) value of
                     Ok current_user_name ->
                         ( { model | current_user_name = Just current_user_name }
@@ -50,15 +48,12 @@ update msg model =
                         ( model, Cmd.none )
 
         Msgs.ShowLeftMessage ->
-            Debug.log "Left!"
                 ( model, Cmd.none )
 
         Msgs.ShowErrorMessage ->
-            Debug.log "Error!"
                 ( model, Cmd.none )
 
         Msgs.SendMessage message ->
-            Debug.log "Sending Message!" <|
                 let
                     constructed_message =
                         JE.object
@@ -75,7 +70,6 @@ update msg model =
                 ( { model | phoenix_socket = phoenix_socket, draft_message = "" }, Cmd.map Msgs.PhoenixMsg phoenix_command )
 
         Msgs.ReceiveMessage message_json ->
-            Debug.log "Receiving message!" <|
                 case JD.decodeValue Models.chatMessageDecoder message_json of
                     Ok chatMessage ->
                         let
@@ -107,7 +101,6 @@ update msg model =
                             -- Scroll.toBottomY (uniqueMessagesContainerId model) scroll_pos
                             --     |> Task.attempt (always (Msgs.ScrollMsg Msgs.UnlockScrollHeight))
             in
-            Debug.log ("Receiving old messages!" ++ toString messages_json) <|
                 case JD.decodeValue messagesDecoder messages_json of
                     Ok chat_messages ->
                         let
