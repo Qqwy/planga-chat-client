@@ -21,3 +21,4 @@ type Msg
     | MessagesSoFar JD.Value
     | ChangeDraftMessage String
     | ScrollMsg ScrollMsg
+    | HideChatMessage String

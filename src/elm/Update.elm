@@ -137,6 +137,23 @@ update msg model =
         Msgs.ScrollMsg scroll_msg ->
             updateScrollMsg model scroll_msg
 
+        Msgs.HideChatMessage message_uuid ->
+                let
+                    constructed_message =
+                        JE.object
+                            [ ( "message_uuid", JE.string message_uuid )
+                            ]
+
+                    push_data =
+                        Phoenix.Push.init "hide_message" model.channel_name
+                            |> Phoenix.Push.withPayload constructed_message
+
+                    ( phoenix_socket, phoenix_command ) =
+                        Phoenix.Socket.push push_data model.phoenix_socket
+                in
+                ( { model | phoenix_socket = phoenix_socket, draft_message = "" }, Cmd.map Msgs.PhoenixMsg phoenix_command )
+
+
 
 updateScrollMsg : Model -> Msgs.ScrollMsg -> ( Model, Cmd Msgs.Msg )
 updateScrollMsg model scroll_msg =

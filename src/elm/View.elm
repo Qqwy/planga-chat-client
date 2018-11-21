@@ -84,7 +84,7 @@ message current_user_name message =
             [
             div [class "planga--chat-message-options"]
                     [
-                     span [] [text "×"]
+                     span [onClick (Msgs.HideChatMessage message.uuid)] [text "×"]
                     ]
              , div [ class "planga--chat-message-sent-at-wrapper" ]
                 [ span
