@@ -66,6 +66,7 @@ setupConnection model =
             model.phoenix_socket
                 |> Phoenix.Socket.withDebug
                 |> Phoenix.Socket.on "new_remote_message" model.channel_name Msgs.ReceiveMessage
+                |> Phoenix.Socket.on "changed_message" model.channel_name Msgs.ChangedChatMessage
                 |> Phoenix.Socket.on "messages_so_far" model.channel_name Msgs.MessagesSoFar
                 |> Phoenix.Socket.join channel
     in

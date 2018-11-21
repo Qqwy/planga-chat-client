@@ -22,3 +22,4 @@ type Msg
     | ChangeDraftMessage String
     | ScrollMsg ScrollMsg
     | HideChatMessage String
+    | ChangedChatMessage JD.Value

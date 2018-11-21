@@ -5,6 +5,7 @@ import Dict
 import Dom.Scroll
 import Json.Decode as JD
 import Json.Encode as JE
+import Maybe.Extra
 import Models exposing (Model, uniqueMessagesContainerId)
 import Msgs exposing (Msg)
 import Phoenix.Push
@@ -12,7 +13,6 @@ import Phoenix.Socket
 import Ports
 import Scroll
 import Task
-import Maybe.Extra
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -33,59 +33,74 @@ update msg model =
                 ( phoenix_socket, phoenix_command ) =
                     Phoenix.Socket.update msg model.phoenix_socket
             in
-                ( { model | phoenix_socket = phoenix_socket }
-                , Cmd.map Msgs.PhoenixMsg phoenix_command
-                )
+            ( { model | phoenix_socket = phoenix_socket }
+            , Cmd.map Msgs.PhoenixMsg phoenix_command
+            )
 
         Msgs.ShowJoinedMessage value ->
-                case JD.decodeValue (JD.field "current_user_name" JD.string) value of
-                    Ok current_user_name ->
-                        ( { model | current_user_name = Just current_user_name }
-                        , Cmd.none
-                        )
+            case JD.decodeValue (JD.field "current_user_name" JD.string) value of
+                Ok current_user_name ->
+                    ( { model | current_user_name = Just current_user_name }
+                    , Cmd.none
+                    )
 
-                    Err err ->
-                        ( model, Cmd.none )
+                Err err ->
+                    ( model, Cmd.none )
 
         Msgs.ShowLeftMessage ->
-                ( model, Cmd.none )
+            ( model, Cmd.none )
 
         Msgs.ShowErrorMessage ->
-                ( model, Cmd.none )
+            ( model, Cmd.none )
 
         Msgs.SendMessage message ->
-                let
-                    constructed_message =
-                        JE.object
-                            [ ( "message", JE.string message )
-                            ]
+            let
+                constructed_message =
+                    JE.object
+                        [ ( "message", JE.string message )
+                        ]
 
-                    push_data =
-                        Phoenix.Push.init "new_message" model.channel_name
-                            |> Phoenix.Push.withPayload constructed_message
+                push_data =
+                    Phoenix.Push.init "new_message" model.channel_name
+                        |> Phoenix.Push.withPayload constructed_message
 
-                    ( phoenix_socket, phoenix_command ) =
-                        Phoenix.Socket.push push_data model.phoenix_socket
-                in
-                ( { model | phoenix_socket = phoenix_socket, draft_message = "" }, Cmd.map Msgs.PhoenixMsg phoenix_command )
+                ( phoenix_socket, phoenix_command ) =
+                    Phoenix.Socket.push push_data model.phoenix_socket
+            in
+            ( { model | phoenix_socket = phoenix_socket, draft_message = "" }, Cmd.map Msgs.PhoenixMsg phoenix_command )
 
+        -- TODO Desktop notifications!
         Msgs.ReceiveMessage message_json ->
-                case JD.decodeValue Models.chatMessageDecoder message_json of
-                    Ok chatMessage ->
-                        let
-                            updated_messages =
-                                Dict.insert chatMessage.uuid chatMessage model.messages
+            case JD.decodeValue Models.chatMessageDecoder message_json of
+                Err error ->
+                    ( model, Cmd.none )
 
-                            oldest_timestamp =
-                                model.oldest_timestamp
-                                    |> minimumMaybe (Just chatMessage.sent_at)
-                        in
-                        ( { model | messages = updated_messages, oldest_timestamp = oldest_timestamp }
-                        , Ports.scrollToBottom
-                        )
+                Ok chatMessage ->
+                    let
+                        updated_messages =
+                            Dict.insert chatMessage.uuid chatMessage model.messages
 
-                    Err error ->
-                        ( model, Cmd.none )
+                        oldest_timestamp =
+                            model.oldest_timestamp
+                                |> minimumMaybe (Just chatMessage.sent_at)
+                    in
+                    ( { model | messages = updated_messages, oldest_timestamp = oldest_timestamp }
+                    , Ports.scrollToBottom
+                    )
+
+        Msgs.ChangedChatMessage message_json ->
+            case JD.decodeValue Models.chatMessageDecoder message_json of
+                Err error ->
+                    ( model, Cmd.none )
+
+                Ok chatMessage ->
+                    let
+                        updated_messages =
+                            Dict.insert chatMessage.uuid chatMessage model.messages
+                    in
+                    ( { model | messages = updated_messages }
+                    , Cmd.none
+                    )
 
         Msgs.MessagesSoFar messages_json ->
             let
@@ -96,40 +111,43 @@ update msg model =
                     case model.fetching_messages_scroll_pos of
                         Nothing ->
                             Cmd.none
+
                         Just scroll_pos ->
                             Ports.keepVScrollPos
-                            -- Scroll.toBottomY (uniqueMessagesContainerId model) scroll_pos
-                            --     |> Task.attempt (always (Msgs.ScrollMsg Msgs.UnlockScrollHeight))
+
+                -- Scroll.toBottomY (uniqueMessagesContainerId model) scroll_pos
+                --     |> Task.attempt (always (Msgs.ScrollMsg Msgs.UnlockScrollHeight))
             in
-                case JD.decodeValue messagesDecoder messages_json of
-                    Ok chat_messages ->
-                        let
-                            new_messages =
-                                chat_messages
-                                    |> List.map (\message -> ( message.uuid, message ))
-                                    |> Dict.fromList
+            case JD.decodeValue messagesDecoder messages_json of
+                Ok chat_messages ->
+                    let
+                        new_messages =
+                            chat_messages
+                                |> List.map (\message -> ( message.uuid, message ))
+                                |> Dict.fromList
 
-                            updated_messages =
-                                model.messages
-                                    |> Dict.union new_messages
+                        updated_messages =
+                            model.messages
+                                |> Dict.union new_messages
 
-                            oldest_timestamp =
-                                model.oldest_timestamp
-                                    |> minimumMaybe (List.minimum (List.map .sent_at chat_messages))
-                        in
-                            if List.length chat_messages == 0 then
-                                (model, Cmd.none)
-                            else
-                              ( { model
-                                  | messages = updated_messages
-                                  , oldest_timestamp = oldest_timestamp
-                                    , fetching_messages_scroll_pos = Nothing
-                                }
-                              , fix_scroll_pos
-                              )
+                        oldest_timestamp =
+                            model.oldest_timestamp
+                                |> minimumMaybe (List.minimum (List.map .sent_at chat_messages))
+                    in
+                    if List.length chat_messages == 0 then
+                        ( model, Cmd.none )
 
-                    Err error ->
-                        ( model, fix_scroll_pos )
+                    else
+                        ( { model
+                            | messages = updated_messages
+                            , oldest_timestamp = oldest_timestamp
+                            , fetching_messages_scroll_pos = Nothing
+                          }
+                        , fix_scroll_pos
+                        )
+
+                Err error ->
+                    ( model, fix_scroll_pos )
 
         Msgs.ChangeDraftMessage new_draft_message ->
             ( { model | draft_message = new_draft_message }, Cmd.none )
@@ -138,21 +156,20 @@ update msg model =
             updateScrollMsg model scroll_msg
 
         Msgs.HideChatMessage message_uuid ->
-                let
-                    constructed_message =
-                        JE.object
-                            [ ( "message_uuid", JE.string message_uuid )
-                            ]
+            let
+                constructed_message =
+                    JE.object
+                        [ ( "message_uuid", JE.string message_uuid )
+                        ]
 
-                    push_data =
-                        Phoenix.Push.init "hide_message" model.channel_name
-                            |> Phoenix.Push.withPayload constructed_message
+                push_data =
+                    Phoenix.Push.init "hide_message" model.channel_name
+                        |> Phoenix.Push.withPayload constructed_message
 
-                    ( phoenix_socket, phoenix_command ) =
-                        Phoenix.Socket.push push_data model.phoenix_socket
-                in
-                ( { model | phoenix_socket = phoenix_socket, draft_message = "" }, Cmd.map Msgs.PhoenixMsg phoenix_command )
-
+                ( phoenix_socket, phoenix_command ) =
+                    Phoenix.Socket.push push_data model.phoenix_socket
+            in
+            ( { model | phoenix_socket = phoenix_socket, draft_message = "" }, Cmd.map Msgs.PhoenixMsg phoenix_command )
 
 
 updateScrollMsg : Model -> Msgs.ScrollMsg -> ( Model, Cmd Msgs.Msg )
