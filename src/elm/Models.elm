@@ -1,9 +1,8 @@
-module Models exposing (Model, Options, chatMessageDecoder, initialModel, optionsDecoder, uniqueMessagesContainerId, conversationUserInfoDecoder, ConversationUserInfo)
+module Models exposing (ChatMessage, ConversationUserInfo, Model, Options, UUID, chatMessageDecoder, conversationUserInfoDecoder, initialModel, optionsDecoder, uniqueMessagesContainerId)
 
 import Base64
 import Dict exposing (Dict)
 import Json.Decode as JD
-import Msgs exposing (Msg)
 import Phoenix.Socket
 
 
@@ -24,6 +23,7 @@ type alias Model msg =
     , current_user_name : Maybe String
     , fetching_messages_scroll_pos : Maybe Float
     , debug_mode : Bool
+    , moderation_window : Maybe ModerationWindowState
     }
 
 
@@ -46,10 +46,14 @@ type alias ConversationUserInfo =
     , banned_until : Maybe Int -- TODO datetime
     }
 
+type alias ModerationWindowState =
+    {subject : ChatMessage
+    }
+
 conversationUserInfoDecoder : JD.Decoder ConversationUserInfo
 conversationUserInfoDecoder =
     JD.map2 ConversationUserInfo
-        (JD.field "role" (JD.oneOf [JD.null "", JD.string]))
+        (JD.field "role" (JD.oneOf [ JD.null "", JD.string ]))
         (JD.field "banned_until" (JD.nullable (JD.int |> JD.map (\posix_seconds -> posix_seconds))))
 
 
@@ -75,7 +79,7 @@ chatMessageDecoder =
     JD.map6 ChatMessage
         (JD.field "uuid" JD.string)
         (JD.field "author_name" JD.string)
-        (JD.field "author_role" (JD.oneOf [JD.null "", JD.string]))
+        (JD.field "author_role" (JD.oneOf [ JD.null "", JD.string ]))
         (JD.field "content" JD.string)
         (JD.field "sent_at" JD.string)
         (JD.field "deleted_at" (JD.nullable JD.string))
@@ -100,6 +104,7 @@ initialModel public_api_id encrypted_options socket_location debug_mode =
     , current_user_name = Nothing
     , fetching_messages_scroll_pos = Just 0
     , debug_mode = debug_mode
+    , moderation_window = Nothing
     }
 
 

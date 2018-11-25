@@ -183,11 +183,11 @@ update msg model =
                     Phoenix.Socket.push push_data model.phoenix_socket
             in
             ( { model | phoenix_socket = phoenix_socket, draft_message = "" }, Cmd.map Msgs.PhoenixMsg phoenix_command )
-        Msgs.OpenModerationWindow conversation_user_info ->
-            (model, Cmd.none)
+        Msgs.OpenModerationWindow message ->
+            ({model | moderation_window = Just {subject = message}}, Cmd.none) |> Debug.log "OpenModerationWindow"
 
         Msgs.CloseModerationWindow ->
-            (model, Cmd.none)
+            ({model | moderation_window = Nothing}, Cmd.none)
 
 
 updateScrollMsg : Model Msg -> Msgs.ScrollMsg -> ( Model Msg, Cmd Msg )

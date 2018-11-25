@@ -4,7 +4,7 @@ module View exposing (view)
 
 import Dict
 import ElmEscapeHtml
-import Html exposing (Html, button, div, dl, footer, form, header, input, span, text, em)
+import Html exposing (Html, button, div, dl, em, footer, form, header, input, span, text)
 import Html.Attributes exposing (attribute, class, disabled, id, maxlength, name, placeholder, property, title, value)
 import Html.Events exposing (on, onClick, onInput, onSubmit)
 import Json.Decode
@@ -26,10 +26,20 @@ data name val =
     Html.Attributes.attribute ("data-" ++ name) val
 
 
+onRightClick message =
+    Html.Events.onWithOptions
+        "contextmenu"
+        { stopPropagation = True
+        , preventDefault = True
+        }
+        (Json.Decode.succeed message)
+
+
 container model =
     div [ class "planga--chat-container" ]
         [ messages model
         , newMessageForm model
+        , moderationWindow model
         ]
 
 
@@ -40,7 +50,7 @@ onScrollFetchScrollInfo =
 scrollHeight height =
     property "scrollTop" (Json.Encode.int height)
 
-
+messages : Model Msg -> Html Msg
 messages model =
     let
         message_list =
@@ -56,54 +66,70 @@ messages model =
         messages_html
 
 
+message : Maybe String -> Models.ChatMessage -> Html Msg
 message current_user_name message =
-        let
-            is_current_user =
-                case current_user_name |> Maybe.map (\val -> val == message.author_name) of
-                    Just True ->
-                        True
-                    _ ->
-                        False
-            is_deleted = message.deleted_at /= Nothing
+    let
+        is_current_user =
+            case current_user_name |> Maybe.map (\val -> val == message.author_name) of
+                Just True ->
+                    True
 
-            message_class =
-                "planga--chat-message"
-                ++ (if is_current_user then " planga--chat-current-user-message" else "")
-                    ++ (if is_deleted then " planga--chat-deleted-message" else "")
-            message_content =
-              if is_deleted then
-                  span [title ("Original message: " ++ message.content)] [text "This message was deleted"]
-              else
-                  text (ElmEscapeHtml.unescape message.content)
-        in
-        div
-            [ class message_class
-            , data "chat-message--sent-at" message.sent_at
-            , data "chat-message--uuid" message.uuid
-            , data "chat-message--author-role" message.author_role
-            , data "chat-message--author-name" message.author_name
+                _ ->
+                    False
+
+        is_deleted =
+            message.deleted_at /= Nothing
+
+        message_class =
+            "planga--chat-message"
+                ++ (if is_current_user then
+                        " planga--chat-current-user-message"
+
+                    else
+                        ""
+                   )
+                ++ (if is_deleted then
+                        " planga--chat-deleted-message"
+
+                    else
+                        ""
+                   )
+
+        message_content =
+            if is_deleted then
+                span [ title ("Original message: " ++ message.content) ] [ text "This message was deleted" ]
+
+            else
+                text (ElmEscapeHtml.unescape message.content)
+    in
+    div
+        [ class message_class
+        , data "chat-message--sent-at" message.sent_at
+        , data "chat-message--uuid" message.uuid
+        , data "chat-message--author-role" message.author_role
+        , data "chat-message--author-name" message.author_name
+        , onRightClick (Msgs.OpenModerationWindow message)
+        ]
+        [ div [ class "planga--chat-message-options" ]
+            [ span [ onClick (Msgs.HideChatMessage message.uuid) ] [ text "×" ]
             ]
-            [
-            div [class "planga--chat-message-options"]
-                    [
-                     span [onClick (Msgs.HideChatMessage message.uuid)] [text "×"]
-                    ]
-             , div [ class "planga--chat-message-sent-at-wrapper" ]
-                [ span
-                    [ class "planga--chat-message-sent-at"
-                    , title message.sent_at
-                    ]
-                    [ text message.sent_at
-                    ]
+        , div [ class "planga--chat-message-sent-at-wrapper" ]
+            [ span
+                [ class "planga--chat-message-sent-at"
+                , title message.sent_at
                 ]
-            , div [ class "planga--chat-author-wrapper" ]
-                [ span [ class "planga--chat-author-name" ] [ text message.author_name ]
-                , span [ class "planga--chat-message-separator" ] [ text ":   " ]
+                [ text message.sent_at
                 ]
-            , div [ class "planga--chat-message-content" ] [ message_content ]
             ]
+        , div [ class "planga--chat-author-wrapper" ]
+            [ span [ class "planga--chat-author-name" ] [ text message.author_name ]
+            , span [ class "planga--chat-message-separator" ] [ text ":   " ]
+            ]
+        , div [ class "planga--chat-message-content" ] [ message_content ]
+        ]
 
 
+newMessageForm : Model Msg -> Html Msg
 newMessageForm model =
     let
         placeholder_value =
@@ -131,3 +157,26 @@ newMessageForm model =
             [ text "Send"
             ]
         ]
+
+
+moderationWindow : Model Msg -> Html Msg
+moderationWindow model =
+    let
+        list_item ( key, value ) =
+            [ Html.dt [] [ text key ], Html.dd [] [ text value ] ]
+
+        info_list subject =
+            [ ( "User:", subject.author_name )
+            , ( "Message", subject.content )
+            ]
+                |> List.concatMap list_item
+    in
+    case model.moderation_window of
+        Nothing ->
+            text ""
+
+        Just { subject } ->
+            div []
+                [ Html.h1 [] [ text "Moderation" ]
+                , Html.dl [] (info_list subject)
+                ]

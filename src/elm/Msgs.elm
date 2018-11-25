@@ -3,6 +3,7 @@ import Phoenix.Socket
 import Json.Decode as JD
 import Scroll
 import Dom
+import Models exposing (ChatMessage)
 
 type ScrollMsg
     = ScrollTopChanged
@@ -24,5 +25,5 @@ type Msg
     | HideChatMessage String
     | ChangedChatMessage JD.Value
     | ChangedConversationUserInfo JD.Value
-    | OpenModerationWindow Int
+    | OpenModerationWindow ChatMessage
     | CloseModerationWindow
