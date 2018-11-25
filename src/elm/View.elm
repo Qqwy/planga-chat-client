@@ -59,7 +59,7 @@ messages model =
 message current_user_name message =
         let
             is_current_user =
-                case current_user_name |> Maybe.map (\val -> val == message.name) of
+                case current_user_name |> Maybe.map (\val -> val == message.author_name) of
                     Just True ->
                         True
                     _ ->
@@ -95,7 +95,7 @@ message current_user_name message =
                     ]
                 ]
             , div [ class "planga--chat-author-wrapper" ]
-                [ span [ class "planga--chat-author-name" ] [ text message.name ]
+                [ span [ class "planga--chat-author-name" ] [ text message.author_name ]
                 , span [ class "planga--chat-message-separator" ] [ text ":   " ]
                 ]
             , div [ class "planga--chat-message-content" ] [ message_content ]

@@ -29,7 +29,7 @@ type alias Model =
 
 type alias ChatMessage =
     { uuid : String
-    , name : String
+    , author_name : String
     , content : String
     , sent_at : String
     , deleted_at : Maybe String
@@ -73,7 +73,7 @@ chatMessageDecoder : JD.Decoder ChatMessage
 chatMessageDecoder =
     JD.map5 ChatMessage
         (JD.field "uuid" JD.string)
-        (JD.field "name" JD.string)
+        (JD.field "author_name" JD.string)
         (JD.field "content" JD.string)
         (JD.field "sent_at" JD.string)
         (JD.field "deleted_at" (JD.nullable JD.string))

@@ -75,17 +75,17 @@ update msg model =
                 Err error ->
                     ( model, Cmd.none )
 
-                Ok chatMessage ->
+                Ok chat_message ->
                     let
                         updated_messages =
-                            Dict.insert chatMessage.uuid chatMessage model.messages
+                            Dict.insert chat_message.uuid chat_message model.messages
 
                         oldest_timestamp =
                             model.oldest_timestamp
-                                |> minimumMaybe (Just chatMessage.sent_at)
+                                |> minimumMaybe (Just chat_message.sent_at)
                     in
                     ( { model | messages = updated_messages, oldest_timestamp = oldest_timestamp }
-                    , Cmd.batch [Ports.scrollToBottom, Ports.sendBrowserNotification (chatMessage.name ++ ": " ++ chatMessage.content)]
+                    , Cmd.batch [Ports.scrollToBottom, Ports.sendBrowserNotification (chat_message.author_name ++ ": " ++ chat_message.content)]
                     )
 
         Msgs.ChangedChatMessage message_json ->
@@ -104,7 +104,10 @@ update msg model =
         Msgs.ChangedConversationUserInfo json ->
             case JD.decodeValue Models.conversationUserInfoDecoder json of
                 Err error ->
-                    (model, Cmd.none)
+                    let
+                        _ = Debug.log "ChangedConversationUserInfo error" error
+                    in
+                        (model, Cmd.none)
                 Ok info ->
                     ({model| conversation_user_info = Just info}, Cmd.none)
 
@@ -153,6 +156,10 @@ update msg model =
                         )
 
                 Err error ->
+                    let
+                        _ = Debug.log "MessagesSoFar error" error
+                    in
+
                     ( model, fix_scroll_pos )
 
         Msgs.ChangeDraftMessage new_draft_message ->
