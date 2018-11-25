@@ -15,7 +15,7 @@ import Scroll
 import Task
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
+update : Msg -> Model Msg -> ( Model Msg, Cmd Msg )
 update msg model =
     case msg of
         Msgs.NoOp ->
@@ -183,9 +183,14 @@ update msg model =
                     Phoenix.Socket.push push_data model.phoenix_socket
             in
             ( { model | phoenix_socket = phoenix_socket, draft_message = "" }, Cmd.map Msgs.PhoenixMsg phoenix_command )
+        Msgs.OpenModerationWindow conversation_user_info ->
+            (model, Cmd.none)
+
+        Msgs.CloseModerationWindow ->
+            (model, Cmd.none)
 
 
-updateScrollMsg : Model -> Msgs.ScrollMsg -> ( Model, Cmd Msgs.Msg )
+updateScrollMsg : Model Msg -> Msgs.ScrollMsg -> ( Model Msg, Cmd Msg )
 updateScrollMsg model scroll_msg =
     case scroll_msg of
         Msgs.ScrollTopChanged ->
@@ -215,7 +220,7 @@ updateScrollMsg model scroll_msg =
             ( { model | fetching_messages_scroll_pos = Nothing }, Cmd.none )
 
 
-fetchOldMessages : Model -> Float -> ( Model, Cmd Msgs.Msg )
+fetchOldMessages : Model Msg -> Float -> ( Model Msg, Cmd Msg )
 fetchOldMessages model scroll_bottom =
     case model.oldest_timestamp of
         Nothing ->

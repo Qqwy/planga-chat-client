@@ -24,3 +24,5 @@ type Msg
     | HideChatMessage String
     | ChangedChatMessage JD.Value
     | ChangedConversationUserInfo JD.Value
+    | OpenModerationWindow Int
+    | CloseModerationWindow

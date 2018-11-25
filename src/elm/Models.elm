@@ -11,11 +11,11 @@ type alias UUID =
     String
 
 
-type alias Model =
+type alias Model msg =
     { messages : Dict UUID ChatMessage
     , oldest_timestamp : Maybe String
     , draft_message : String
-    , phoenix_socket : Phoenix.Socket.Socket Msg
+    , phoenix_socket : Phoenix.Socket.Socket msg
     , socket_location : String
     , channel_name : String
     , conversation_user_info : Maybe ConversationUserInfo
@@ -86,7 +86,7 @@ channelName public_api_id encrypted_options =
     "encrypted_chat:" ++ Base64.encode public_api_id ++ "#" ++ Base64.encode encrypted_options
 
 
-initialModel : String -> String -> String -> Bool -> Model
+initialModel : String -> String -> String -> Bool -> Model msg
 initialModel public_api_id encrypted_options socket_location debug_mode =
     { messages = Dict.empty
     , oldest_timestamp = Nothing

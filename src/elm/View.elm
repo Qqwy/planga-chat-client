@@ -15,7 +15,7 @@ import Msgs exposing (Msg)
 import Ports
 
 
-view : Model -> Html Msg
+view : Model Msg -> Html Msg
 view model =
     div []
         [ container model
