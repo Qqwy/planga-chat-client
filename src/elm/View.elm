@@ -78,8 +78,10 @@ message current_user_name message =
         in
         div
             [ class message_class
-            , data "message-sent-at" message.sent_at
-            , data "message-uuid" message.uuid
+            , data "chat-message--sent-at" message.sent_at
+            , data "chat-message--uuid" message.uuid
+            , data "chat-message--author-role" message.author_role
+            , data "chat-message--author-name" message.author_name
             ]
             [
             div [class "planga--chat-message-options"]

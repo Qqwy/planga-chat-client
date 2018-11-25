@@ -30,6 +30,7 @@ type alias Model =
 type alias ChatMessage =
     { uuid : String
     , author_name : String
+    , author_role : Role
     , content : String
     , sent_at : String
     , deleted_at : Maybe String
@@ -42,14 +43,14 @@ type alias Role =
 
 type alias ConversationUserInfo =
     { role : Role
-    , banned_until : String -- TODO datetime
+    , banned_until : Maybe Int -- TODO datetime
     }
 
 conversationUserInfoDecoder : JD.Decoder ConversationUserInfo
 conversationUserInfoDecoder =
     JD.map2 ConversationUserInfo
-        (JD.field "role" JD.string)
-        (JD.field "banned_until" JD.string)
+        (JD.field "role" (JD.oneOf [JD.null "", JD.string]))
+        (JD.field "banned_until" (JD.nullable (JD.int |> JD.map (\posix_seconds -> posix_seconds))))
 
 
 type alias Options =
@@ -71,9 +72,10 @@ optionsDecoder =
 
 chatMessageDecoder : JD.Decoder ChatMessage
 chatMessageDecoder =
-    JD.map5 ChatMessage
+    JD.map6 ChatMessage
         (JD.field "uuid" JD.string)
         (JD.field "author_name" JD.string)
+        (JD.field "author_role" (JD.oneOf [JD.null "", JD.string]))
         (JD.field "content" JD.string)
         (JD.field "sent_at" JD.string)
         (JD.field "deleted_at" (JD.nullable JD.string))
