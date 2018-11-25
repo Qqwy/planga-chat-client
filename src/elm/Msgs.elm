@@ -23,3 +23,4 @@ type Msg
     | ScrollMsg ScrollMsg
     | HideChatMessage String
     | ChangedChatMessage JD.Value
+    | ChangedConversationUserInfo JD.Value

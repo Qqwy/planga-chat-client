@@ -101,6 +101,12 @@ update msg model =
                     ( { model | messages = updated_messages }
                     , Cmd.none
                     )
+        Msgs.ChangedConversationUserInfo json ->
+            case JD.decodeValue Models.conversationUserInfoDecoder json of
+                Err error ->
+                    (model, Cmd.none)
+                Ok info ->
+                    ({model| conversation_user_info = Just info}, Cmd.none)
 
         Msgs.MessagesSoFar messages_json ->
             let
