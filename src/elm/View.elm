@@ -43,12 +43,20 @@ container model =
         ]
 
 
+checkbox attributes contents =
+    Html.label []
+        (Html.input ([ Html.Attributes.type_ "checkbox" ] ++ attributes) []
+            :: contents
+        )
+
+
 onScrollFetchScrollInfo =
     on "scroll" (Json.Decode.value |> Json.Decode.map (always (Msgs.ScrollMsg Msgs.ScrollTopChanged)))
 
 
 scrollHeight height =
     property "scrollTop" (Json.Encode.int height)
+
 
 messages : Model Msg -> Html Msg
 messages model =
@@ -179,4 +187,17 @@ moderationWindow model =
             div []
                 [ Html.h1 [] [ text "Moderation" ]
                 , Html.dl [] (info_list subject)
+                , Html.div []
+                    [ Html.h1 [] [ text "Actions" ]
+                    , checkbox [] [ text "Delete Message" ]
+                    , checkbox [] [ text "Ban user for" ]
+                    , Html.ul []
+                        [ Html.li [] [ text "5 minutes" ]
+                        , Html.li [] [ text "15 minutes" ]
+                        , Html.li [] [ text "1 hour" ]
+                        , Html.li [] [ text "1 day" ]
+                        , Html.li [] [ text "permanently" ]
+                        ]
+                    , button [] [ text "Perform" ]
+                    ]
                 ]
