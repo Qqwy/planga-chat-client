@@ -174,8 +174,9 @@ moderationWindow model =
             [ Html.dt [] [ text key ], Html.dd [] [ text value ] ]
 
         info_list subject =
-            [ ( "User:", subject.author_name )
+            [ ( "User", subject.author_name )
             , ( "Message", subject.content )
+            , ( "Status", if subject.deleted_at == Nothing then "Visible" else "Hidden" )
             ]
                 |> List.concatMap list_item
     in
@@ -198,6 +199,6 @@ moderationWindow model =
                         , Html.li [] [ text "1 day" ]
                         , Html.li [] [ text "permanently" ]
                         ]
-                    , button [] [ text "Perform" ]
+                    , button [onClick (Msgs.HideChatMessage subject.uuid)] [ text "Perform" ]
                     ]
                 ]

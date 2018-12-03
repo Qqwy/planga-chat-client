@@ -55,14 +55,14 @@ update msg model =
 
         Msgs.SendMessage message ->
             let
-                constructed_message =
+                constructed_request =
                     JE.object
                         [ ( "message", JE.string message )
                         ]
 
                 push_data =
                     Phoenix.Push.init "new_message" model.channel_name
-                        |> Phoenix.Push.withPayload constructed_message
+                        |> Phoenix.Push.withPayload constructed_request
 
                 ( phoenix_socket, phoenix_command ) =
                     Phoenix.Socket.push push_data model.phoenix_socket
@@ -170,19 +170,35 @@ update msg model =
 
         Msgs.HideChatMessage message_uuid ->
             let
-                constructed_message =
+                constructed_request =
                     JE.object
                         [ ( "message_uuid", JE.string message_uuid )
                         ]
 
                 push_data =
                     Phoenix.Push.init "hide_message" model.channel_name
-                        |> Phoenix.Push.withPayload constructed_message
+                        |> Phoenix.Push.withPayload constructed_request
 
                 ( phoenix_socket, phoenix_command ) =
                     Phoenix.Socket.push push_data model.phoenix_socket
             in
-            ( { model | phoenix_socket = phoenix_socket, draft_message = "" }, Cmd.map Msgs.PhoenixMsg phoenix_command )
+            ( { model | phoenix_socket = phoenix_socket}, Cmd.map Msgs.PhoenixMsg phoenix_command )
+        Msgs.BanUser user_uuid ->
+            let
+                constructed_request =
+                    JE.object
+                        [
+                         ("user_uuid", JE.string user_uuid)
+                        ]
+                push_data =
+                    Phoenix.Push.init "ban_user" model.channel_name
+                        |> Phoenix.Push.withPayload constructed_request
+
+                ( phoenix_socket, phoenix_command ) =
+                    Phoenix.Socket.push push_data model.phoenix_socket
+            in
+                ( { model | phoenix_socket = phoenix_socket}, Cmd.map Msgs.PhoenixMsg phoenix_command )
+
         Msgs.OpenModerationWindow message ->
             ({model | moderation_window = Just {subject = message}}, Cmd.none) |> Debug.log "OpenModerationWindow"
 
