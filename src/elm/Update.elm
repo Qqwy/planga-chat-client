@@ -189,6 +189,7 @@ update msg model =
                     JE.object
                         [
                          ("user_uuid", JE.string user_uuid)
+                        , ("duration_minutes", JE.int 1)
                         ]
                 push_data =
                     Phoenix.Push.init "ban_user" model.channel_name
