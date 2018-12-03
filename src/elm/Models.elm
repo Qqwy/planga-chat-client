@@ -31,6 +31,7 @@ type alias ChatMessage =
     { uuid : String
     , author_name : String
     , author_role : Role
+    , author_uuid : UUID
     , content : String
     , sent_at : String
     , deleted_at : Maybe String
@@ -76,10 +77,11 @@ optionsDecoder =
 
 chatMessageDecoder : JD.Decoder ChatMessage
 chatMessageDecoder =
-    JD.map6 ChatMessage
+    JD.map7 ChatMessage
         (JD.field "uuid" JD.string)
         (JD.field "author_name" JD.string)
         (JD.field "author_role" (JD.oneOf [ JD.null "", JD.string ]))
+        (JD.field "author_uuid" JD.string)
         (JD.field "content" JD.string)
         (JD.field "sent_at" JD.string)
         (JD.field "deleted_at" (JD.nullable JD.string))

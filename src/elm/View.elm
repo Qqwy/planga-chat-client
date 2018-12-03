@@ -199,6 +199,6 @@ moderationWindow model =
                         , Html.li [] [ text "1 day" ]
                         , Html.li [] [ text "permanently" ]
                         ]
-                    , button [onClick (Msgs.HideChatMessage subject.uuid)] [ text "Perform" ]
+                    , button [onClick (Msgs.BanUser subject.author_uuid)] [ text "Perform" ]
                     ]
                 ]
