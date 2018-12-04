@@ -11,6 +11,7 @@ import Phoenix.Socket
 import Ports
 import Scroll
 import Task
+import Time
 import Update
 import View
 
@@ -83,6 +84,7 @@ setupConnection model =
                 |> Phoenix.Socket.on "changed_message" model.channel_name Msgs.ChangedChatMessage
                 |> Phoenix.Socket.on "messages_so_far" model.channel_name Msgs.MessagesSoFar
                 |> Phoenix.Socket.on "changed_conversation_user_info" model.channel_name Msgs.ChangedConversationUserInfo
+                |> Phoenix.Socket.on "changed_your_conversation_user_info" model.channel_name Msgs.ChangedYourConversationUserInfo
                 |> Phoenix.Socket.join channel
     in
     ( { model | phoenix_socket = phoenix_socket }
@@ -111,7 +113,8 @@ setupConnection model =
 subscriptions : Model Msg -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ Phoenix.Socket.listen model.phoenix_socket Msgs.PhoenixMsg
+        [ Time.every Time.second Msgs.Tick
+        , Phoenix.Socket.listen model.phoenix_socket Msgs.PhoenixMsg
 
         -- , Ports.scrollUpdate Msgs.ScrollHeightCalculated
         ]

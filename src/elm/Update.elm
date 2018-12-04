@@ -27,7 +27,8 @@ update msg model =
                     Debug.log "Debug" string
             in
             ( model, Cmd.none )
-
+        Msgs.Tick current_time ->
+            ({model | current_time = current_time}, Cmd.none)
         Msgs.PhoenixMsg msg ->
             let
                 ( phoenix_socket, phoenix_command ) =
@@ -101,6 +102,22 @@ update msg model =
                     ( { model | messages = updated_messages }
                     , Cmd.none
                     )
+        {- Called whenever 'the current' user's info wrt a  conversation is changed.-}
+        Msgs.ChangedYourConversationUserInfo json ->
+            case JD.decodeValue Models.conversationUserInfoDecoder json of
+                Err error ->
+                    let
+                        _ = Debug.log "ChangedYourConversationUserInfo error" error
+                    in
+                        (model, Cmd.none)
+                Ok info ->
+
+                    let
+                        _ = Debug.log "ChangedYourConversationUserInfo" info
+                    in
+                    ({model| conversation_user_info = Just info}, Cmd.none)
+
+        {- Called whenever 'a' user's info wrt a conversation is changed.-}
         Msgs.ChangedConversationUserInfo json ->
             case JD.decodeValue Models.conversationUserInfoDecoder json of
                 Err error ->
@@ -109,7 +126,11 @@ update msg model =
                     in
                         (model, Cmd.none)
                 Ok info ->
-                    ({model| conversation_user_info = Just info}, Cmd.none)
+                    let
+                        _ = Debug.log "ChangedConversationUserInfo" info
+                    in
+                        (model, Cmd.none)
+
 
         Msgs.MessagesSoFar messages_json ->
             let

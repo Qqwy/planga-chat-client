@@ -1,9 +1,10 @@
-module Models exposing (ChatMessage, ConversationUserInfo, Model, Options, UUID, chatMessageDecoder, conversationUserInfoDecoder, initialModel, optionsDecoder, uniqueMessagesContainerId)
+module Models exposing (ChatMessage, ConversationUserInfo, Model, Options, UUID, chatMessageDecoder, conversationUserInfoDecoder, initialModel, optionsDecoder, uniqueMessagesContainerId, BanStatus(..), banStatus)
 
 import Base64
 import Dict exposing (Dict)
 import Json.Decode as JD
 import Phoenix.Socket
+import Time
 
 
 type alias UUID =
@@ -11,7 +12,8 @@ type alias UUID =
 
 
 type alias Model msg =
-    { messages : Dict UUID ChatMessage
+    { current_time : Time.Time
+    , messages : Dict UUID ChatMessage
     , oldest_timestamp : Maybe String
     , draft_message : String
     , phoenix_socket : Phoenix.Socket.Socket msg
@@ -44,8 +46,21 @@ type alias Role =
 
 type alias ConversationUserInfo =
     { role : Role
-    , banned_until : Maybe Int -- TODO datetime
+    , banned_until : Maybe Time.Time -- TODO datetime
+    , user_id : Int
     }
+
+type BanStatus = NotBanned
+               | BannedUntil Time.Time
+
+banStatus current_time {banned_until} =
+    case banned_until of
+        Nothing -> NotBanned
+        Just until_time ->
+          if until_time < current_time
+          then NotBanned
+          else BannedUntil until_time
+
 
 type alias ModerationWindowState =
     {subject : ChatMessage
@@ -53,9 +68,10 @@ type alias ModerationWindowState =
 
 conversationUserInfoDecoder : JD.Decoder ConversationUserInfo
 conversationUserInfoDecoder =
-    JD.map2 ConversationUserInfo
+    JD.map3 ConversationUserInfo
         (JD.field "role" (JD.oneOf [ JD.null "", JD.string ]))
-        (JD.field "banned_until" (JD.nullable (JD.int |> JD.map (\posix_seconds -> posix_seconds))))
+        (JD.field "banned_until" (JD.nullable (JD.float |> JD.map (\posix_seconds -> posix_seconds * Time.second  ))))
+        (JD.field "user_id" JD.int)
 
 
 type alias Options =
@@ -94,7 +110,8 @@ channelName public_api_id encrypted_options =
 
 initialModel : String -> String -> String -> Bool -> Model msg
 initialModel public_api_id encrypted_options socket_location debug_mode =
-    { messages = Dict.empty
+    { current_time = 0
+    , messages = Dict.empty
     , oldest_timestamp = Nothing
     , draft_message = ""
     , channel_name = channelName public_api_id encrypted_options

@@ -4,6 +4,7 @@ import Json.Decode as JD
 import Scroll
 import Dom
 import Models exposing (ChatMessage, UUID)
+import Time
 
 type ScrollMsg
     = ScrollTopChanged
@@ -13,6 +14,7 @@ type ScrollMsg
 type Msg
     = NoOp
     | Debug String
+    | Tick Time.Time
     | PhoenixMsg (Phoenix.Socket.Msg Msg)
     | ShowJoinedMessage JD.Value
     | ShowErrorMessage
@@ -25,6 +27,7 @@ type Msg
     | HideChatMessage UUID
     | BanUser UUID
     | ChangedChatMessage JD.Value
+    | ChangedYourConversationUserInfo JD.Value
     | ChangedConversationUserInfo JD.Value
     | OpenModerationWindow ChatMessage
     | CloseModerationWindow

@@ -13,6 +13,7 @@ import Maybe.Extra
 import Models exposing (Model, uniqueMessagesContainerId)
 import Msgs exposing (Msg)
 import Ports
+import Time
 
 
 view : Model Msg -> Html Msg
@@ -140,24 +141,47 @@ message current_user_name message =
 newMessageForm : Model Msg -> Html Msg
 newMessageForm model =
     let
-        placeholder_value =
-            model.current_user_name
-                |> Maybe.map (\name -> name ++ ": Type your message here")
-                |> Maybe.withDefault "Unable to connect to Planga Chat"
+        ban_status =
+            model.conversation_user_info
+            |> Maybe.map (Models.banStatus model.current_time)
+            |> Maybe.withDefault Models.NotBanned
+        is_banned = ban_status /= Models.NotBanned
 
-        is_disabled =
-            Maybe.Extra.isNothing model.current_user_name
+        placeholder_value =
+            case (model.conversation_user_info, model.current_user_name) of
+                (Just conversation_user_info, Just current_user_name) ->
+                    case ban_status of
+                        Models.BannedUntil time ->
+                            {disabled = True, placeholder = "Banned for " ++ toString (time - model.current_time) ++ " more milliseconds"}
+                        Models.NotBanned ->
+                            {disabled = False, placeholder = current_user_name ++ ": Type your message here"}
+                (_, _) ->
+
+                    {disabled = True, placeholder = "Not connected to Planga Chat"}
+            -- if Maybe.Extra.isNothing model.conversation_user_info
+            -- then
+            --     "Unable to connect to Planga Chat"
+            -- else
+            --     model.current_user_name
+            --         |> Maybe.map (\name -> name ++ ": Type your message here")
+            --         |> Maybe.withDefault "Unable to connect to Planga Chat"
+        -- is_banned =
+        --     model.conversation_user_info
+        --         |> Maybe.withDefault {banned_until = Nothing}
+        --         |> Maybe.map (\{banned_until} -> banned_until |> Maybe.withDefault 0 |> (>) model.current_time)
+        -- is_disabled =
+        --     Maybe.Extra.isNothing model.current_user_name || Maybe.Extra.isNothing model.conversation_user_info || is_banned
     in
     form [ class "planga--new-message-form", onSubmit (Msgs.SendMessage model.draft_message) ]
         [ div [ class "planga--new-message-field-wrapper" ]
             [ input
                 [ maxlength 4096
-                , placeholder placeholder_value
+                , placeholder placeholder_value.placeholder
                 , name "planga-new-message-field"
                 , class "planga--new-message-field"
                 , onInput Msgs.ChangeDraftMessage
                 , value model.draft_message
-                , disabled is_disabled
+                , disabled placeholder_value.disabled
                 ]
                 []
             ]
