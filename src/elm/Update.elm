@@ -222,7 +222,10 @@ update msg model =
                 ( { model | phoenix_socket = phoenix_socket}, Cmd.map Msgs.PhoenixMsg phoenix_command )
 
         Msgs.OpenModerationWindow message ->
-            ({model | moderation_window = Just {subject = message}}, Cmd.none) |> Debug.log "OpenModerationWindow"
+            if Models.isModerator model then
+                ({model | moderation_window = Just {subject = message}}, Cmd.none) |> Debug.log "OpenModerationWindow"
+            else
+                (model, Cmd.none)
 
         Msgs.CloseModerationWindow ->
             ({model | moderation_window = Nothing}, Cmd.none)

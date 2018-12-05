@@ -66,8 +66,10 @@ messages model =
             model.messages
                 |> Dict.values
                 |> List.sortBy .sent_at
+
         is_moderator =
             Models.isModerator model
+
         messages_html =
             message_list
                 |> List.map (message model.current_user_name is_moderator)
@@ -111,11 +113,11 @@ message current_user_name is_moderator message =
 
             else
                 text (ElmEscapeHtml.unescape message.content)
+
         options_button =
             div [ class "planga--chat-message-options" ]
                 [ span [ onClick (Msgs.OpenModerationWindow message) ] [ text "⚙" ]
                 ]
-
     in
     div
         [ class message_class
@@ -123,7 +125,8 @@ message current_user_name is_moderator message =
         , data "chat-message--uuid" message.uuid
         , data "chat-message--author-role" message.author_role
         , data "chat-message--author-name" message.author_name
-        -- , onRightClick (Msgs.OpenModerationWindow message)
+
+        , onRightClick (Msgs.OpenModerationWindow message)
         ]
         [ options_button
         , div [ class "planga--chat-message-sent-at-wrapper" ]
@@ -147,28 +150,32 @@ newMessageForm model =
     let
         ban_status =
             model.conversation_user_info
-            |> Maybe.map (Models.banStatus model.current_time)
-            |> Maybe.withDefault Models.NotBanned
-        is_banned = ban_status /= Models.NotBanned
+                |> Maybe.map (Models.banStatus model.current_time)
+                |> Maybe.withDefault Models.NotBanned
+
+        is_banned =
+            ban_status /= Models.NotBanned
 
         placeholder_value =
-            case (model.conversation_user_info, model.current_user_name) of
-                (Just conversation_user_info, Just current_user_name) ->
+            case ( model.conversation_user_info, model.current_user_name ) of
+                ( Just conversation_user_info, Just current_user_name ) ->
                     case ban_status of
                         Models.BannedUntil time ->
-                            {disabled = True, placeholder = "Banned for " ++ toString (time - model.current_time) ++ " more milliseconds"}
-                        Models.NotBanned ->
-                            {disabled = False, placeholder = current_user_name ++ ": Type your message here"}
-                (_, _) ->
+                            { disabled = True, placeholder = "Banned for " ++ toString (time - model.current_time) ++ " more milliseconds" }
 
-                    {disabled = True, placeholder = "Not connected to Planga Chat"}
-            -- if Maybe.Extra.isNothing model.conversation_user_info
-            -- then
-            --     "Unable to connect to Planga Chat"
-            -- else
-            --     model.current_user_name
-            --         |> Maybe.map (\name -> name ++ ": Type your message here")
-            --         |> Maybe.withDefault "Unable to connect to Planga Chat"
+                        Models.NotBanned ->
+                            { disabled = False, placeholder = current_user_name ++ ": Type your message here" }
+
+                ( _, _ ) ->
+                    { disabled = True, placeholder = "Not connected to Planga Chat" }
+
+        -- if Maybe.Extra.isNothing model.conversation_user_info
+        -- then
+        --     "Unable to connect to Planga Chat"
+        -- else
+        --     model.current_user_name
+        --         |> Maybe.map (\name -> name ++ ": Type your message here")
+        --         |> Maybe.withDefault "Unable to connect to Planga Chat"
         -- is_banned =
         --     model.conversation_user_info
         --         |> Maybe.withDefault {banned_until = Nothing}
@@ -204,7 +211,13 @@ moderationWindow model =
         info_list subject =
             [ ( "User", subject.author_name )
             , ( "Message", subject.content )
-            , ( "Status", if subject.deleted_at == Nothing then "Visible" else "Hidden" )
+            , ( "Status"
+              , if subject.deleted_at == Nothing then
+                    "Visible"
+
+                else
+                    "Hidden"
+              )
             ]
                 |> List.concatMap list_item
     in
@@ -213,27 +226,32 @@ moderationWindow model =
             text ""
 
         Just { subject } ->
-            div []
-                [ Html.h1 [] [ text "Moderation" ]
-                , Html.dl [] (info_list subject)
-                , Html.div []
-                    [ Html.h1 [] [ text "Message Actions" ]
-                    -- , checkbox [] [ text "Delete Message" ]
-                    -- , checkbox [] [ text "Ban user for" ]
-                    -- , Html.ul []
-                    --     [ Html.li [] [ text "5 minutes" ]
-                    --     , Html.li [] [ text "15 minutes" ]
-                    --     , Html.li [] [ text "1 hour" ]
-                    --     , Html.li [] [ text "1 day" ]
-                    --     , Html.li [] [ text "permanently" ]
-                    --     ]
-                    , button [onClick (Msgs.HideChatMessage subject.uuid)] [ text "delete this message" ]
-                    , Html.h1 [] [ text "Ban User" ]
-                    , button [onClick (Msgs.BanUser subject.author_uuid 1)] [ text "1 minute" ]
-                    , button [onClick (Msgs.BanUser subject.author_uuid 5)] [ text "5 minues" ]
-                    , button [onClick (Msgs.BanUser subject.author_uuid 15)] [ text "15 minutes" ]
-                    , button [onClick (Msgs.BanUser subject.author_uuid (1 * 60))] [ text "1 hour" ]
-                    , button [onClick (Msgs.BanUser subject.author_uuid (1 * 60 * 24))] [ text "1 day" ]
-                    , button [onClick (Msgs.BanUser subject.author_uuid (1 * 60 * 24 * 256 * 1000))] [ text "indefinitely" ]
+            div [ class "planga--moderation-window" ]
+                [ div
+                    [ class "planga--moderation-window-content" ]
+                    [ Html.h1 [] [ text "Moderation" ]
+                    , Html.div [ onClick Msgs.CloseModerationWindow ] [ text "Close" ]
+                    , Html.dl [] (info_list subject)
+                    , Html.div []
+                        [ Html.h2 [] [ text "Message Actions" ]
+
+                        -- , checkbox [] [ text "Delete Message" ]
+                        -- , checkbox [] [ text "Ban user for" ]
+                        -- , Html.ul []
+                        --     [ Html.li [] [ text "5 minutes" ]
+                        --     , Html.li [] [ text "15 minutes" ]
+                        --     , Html.li [] [ text "1 hour" ]
+                        --     , Html.li [] [ text "1 day" ]
+                        --     , Html.li [] [ text "permanently" ]
+                        --     ]
+                        , button [ onClick (Msgs.HideChatMessage subject.uuid) ] [ text "delete this message" ]
+                        , Html.h2 [] [ text "Ban User" ]
+                        , button [ onClick (Msgs.BanUser subject.author_uuid 1) ] [ text "1 minute" ]
+                        , button [ onClick (Msgs.BanUser subject.author_uuid 5) ] [ text "5 minues" ]
+                        , button [ onClick (Msgs.BanUser subject.author_uuid 15) ] [ text "15 minutes" ]
+                        , button [ onClick (Msgs.BanUser subject.author_uuid (1 * 60)) ] [ text "1 hour" ]
+                        , button [ onClick (Msgs.BanUser subject.author_uuid (1 * 60 * 24)) ] [ text "1 day" ]
+                        , button [ onClick (Msgs.BanUser subject.author_uuid (1 * 60 * 24 * 256 * 1000)) ] [ text "indefinitely" ]
+                        ]
                     ]
                 ]
