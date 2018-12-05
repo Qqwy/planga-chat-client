@@ -204,13 +204,13 @@ update msg model =
                     Phoenix.Socket.push push_data model.phoenix_socket
             in
             ( { model | phoenix_socket = phoenix_socket}, Cmd.map Msgs.PhoenixMsg phoenix_command )
-        Msgs.BanUser user_uuid ->
+        Msgs.BanUser user_uuid duration_minutes ->
             let
                 constructed_request =
                     JE.object
                         [
                          ("user_uuid", JE.string user_uuid)
-                        , ("duration_minutes", JE.int 1)
+                        , ("duration_minutes", JE.int duration_minutes)
                         ]
                 push_data =
                     Phoenix.Push.init "ban_user" model.channel_name

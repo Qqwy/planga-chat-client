@@ -1,4 +1,4 @@
-module Models exposing (ChatMessage, ConversationUserInfo, Model, Options, UUID, chatMessageDecoder, conversationUserInfoDecoder, initialModel, optionsDecoder, uniqueMessagesContainerId, BanStatus(..), banStatus)
+module Models exposing (ChatMessage, ConversationUserInfo, Model, Options, UUID, chatMessageDecoder, conversationUserInfoDecoder, initialModel, optionsDecoder, uniqueMessagesContainerId, BanStatus(..), banStatus, isModerator)
 
 import Base64
 import Dict exposing (Dict)
@@ -65,6 +65,12 @@ banStatus current_time {banned_until} =
 type alias ModerationWindowState =
     {subject : ChatMessage
     }
+
+isModerator : Model msg -> Bool
+isModerator {conversation_user_info} =
+    case conversation_user_info of
+        Nothing -> False
+        Just {role} -> role == "moderator"
 
 conversationUserInfoDecoder : JD.Decoder ConversationUserInfo
 conversationUserInfoDecoder =

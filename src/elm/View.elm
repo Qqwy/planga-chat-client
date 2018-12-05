@@ -66,17 +66,18 @@ messages model =
             model.messages
                 |> Dict.values
                 |> List.sortBy .sent_at
-
+        is_moderator =
+            Models.isModerator model
         messages_html =
             message_list
-                |> List.map (message model.current_user_name)
+                |> List.map (message model.current_user_name is_moderator)
     in
     dl [ class "planga--chat-messages", id (Models.uniqueMessagesContainerId model), onScrollFetchScrollInfo ]
         messages_html
 
 
-message : Maybe String -> Models.ChatMessage -> Html Msg
-message current_user_name message =
+message : Maybe String -> Bool -> Models.ChatMessage -> Html Msg
+message current_user_name is_moderator message =
     let
         is_current_user =
             case current_user_name |> Maybe.map (\val -> val == message.author_name) of
@@ -110,6 +111,11 @@ message current_user_name message =
 
             else
                 text (ElmEscapeHtml.unescape message.content)
+        options_button =
+            div [ class "planga--chat-message-options" ]
+                [ span [ onClick (Msgs.OpenModerationWindow message) ] [ text "⚙" ]
+                ]
+
     in
     div
         [ class message_class
@@ -117,11 +123,9 @@ message current_user_name message =
         , data "chat-message--uuid" message.uuid
         , data "chat-message--author-role" message.author_role
         , data "chat-message--author-name" message.author_name
-        , onRightClick (Msgs.OpenModerationWindow message)
+        -- , onRightClick (Msgs.OpenModerationWindow message)
         ]
-        [ div [ class "planga--chat-message-options" ]
-            [ span [ onClick (Msgs.HideChatMessage message.uuid) ] [ text "×" ]
-            ]
+        [ options_button
         , div [ class "planga--chat-message-sent-at-wrapper" ]
             [ span
                 [ class "planga--chat-message-sent-at"
@@ -213,16 +217,23 @@ moderationWindow model =
                 [ Html.h1 [] [ text "Moderation" ]
                 , Html.dl [] (info_list subject)
                 , Html.div []
-                    [ Html.h1 [] [ text "Actions" ]
-                    , checkbox [] [ text "Delete Message" ]
-                    , checkbox [] [ text "Ban user for" ]
-                    , Html.ul []
-                        [ Html.li [] [ text "5 minutes" ]
-                        , Html.li [] [ text "15 minutes" ]
-                        , Html.li [] [ text "1 hour" ]
-                        , Html.li [] [ text "1 day" ]
-                        , Html.li [] [ text "permanently" ]
-                        ]
-                    , button [onClick (Msgs.BanUser subject.author_uuid)] [ text "Perform" ]
+                    [ Html.h1 [] [ text "Message Actions" ]
+                    -- , checkbox [] [ text "Delete Message" ]
+                    -- , checkbox [] [ text "Ban user for" ]
+                    -- , Html.ul []
+                    --     [ Html.li [] [ text "5 minutes" ]
+                    --     , Html.li [] [ text "15 minutes" ]
+                    --     , Html.li [] [ text "1 hour" ]
+                    --     , Html.li [] [ text "1 day" ]
+                    --     , Html.li [] [ text "permanently" ]
+                    --     ]
+                    , button [onClick (Msgs.HideChatMessage subject.uuid)] [ text "delete this message" ]
+                    , Html.h1 [] [ text "Ban User" ]
+                    , button [onClick (Msgs.BanUser subject.author_uuid 1)] [ text "1 minute" ]
+                    , button [onClick (Msgs.BanUser subject.author_uuid 5)] [ text "5 minues" ]
+                    , button [onClick (Msgs.BanUser subject.author_uuid 15)] [ text "15 minutes" ]
+                    , button [onClick (Msgs.BanUser subject.author_uuid (1 * 60))] [ text "1 hour" ]
+                    , button [onClick (Msgs.BanUser subject.author_uuid (1 * 60 * 24))] [ text "1 day" ]
+                    , button [onClick (Msgs.BanUser subject.author_uuid (1 * 60 * 24 * 256 * 1000))] [ text "indefinitely" ]
                     ]
                 ]

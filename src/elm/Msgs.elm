@@ -1,10 +1,11 @@
 module Msgs exposing (Msg(..), ScrollMsg(..))
 import Phoenix.Socket
 import Json.Decode as JD
-import Scroll
 import Dom
 import Models exposing (ChatMessage, UUID)
 import Time
+
+type alias DurationMinutes = Int
 
 type ScrollMsg
     = ScrollTopChanged
@@ -25,7 +26,7 @@ type Msg
     | ChangeDraftMessage String
     | ScrollMsg ScrollMsg
     | HideChatMessage UUID
-    | BanUser UUID
+    | BanUser UUID DurationMinutes
     | ChangedChatMessage JD.Value
     | ChangedYourConversationUserInfo JD.Value
     | ChangedConversationUserInfo JD.Value
