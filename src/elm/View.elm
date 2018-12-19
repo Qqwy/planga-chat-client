@@ -119,30 +119,33 @@ message current_user_name is_moderator message =
                 [ span [ onClick (Msgs.OpenModerationWindow message) ] [ text "⚙" ]
                 ]
     in
-    div
-        [ class message_class
-        , data "chat-message--sent-at" message.sent_at
-        , data "chat-message--uuid" message.uuid
-        , data "chat-message--author-role" message.author_role
-        , data "chat-message--author-name" message.author_name
+    if is_deleted && not is_moderator then
+        text ""
 
-        , onRightClick (Msgs.OpenModerationWindow message)
-        ]
-        [ options_button
-        , div [ class "planga--chat-message-sent-at-wrapper" ]
-            [ span
-                [ class "planga--chat-message-sent-at"
-                , title message.sent_at
-                ]
-                [ text message.sent_at
-                ]
+    else
+        div
+            [ class message_class
+            , data "chat-message--sent-at" message.sent_at
+            , data "chat-message--uuid" message.uuid
+            , data "chat-message--author-role" message.author_role
+            , data "chat-message--author-name" message.author_name
+            , onRightClick (Msgs.OpenModerationWindow message)
             ]
-        , div [ class "planga--chat-author-wrapper" ]
-            [ span [ class "planga--chat-author-name" ] [ text message.author_name ]
-            , span [ class "planga--chat-message-separator" ] [ text ":   " ]
+            [ options_button
+            , div [ class "planga--chat-message-sent-at-wrapper" ]
+                [ span
+                    [ class "planga--chat-message-sent-at"
+                    , title message.sent_at
+                    ]
+                    [ text message.sent_at
+                    ]
+                ]
+            , div [ class "planga--chat-author-wrapper" ]
+                [ span [ class "planga--chat-author-name" ] [ text message.author_name ]
+                , span [ class "planga--chat-message-separator" ] [ text ":   " ]
+                ]
+            , div [ class "planga--chat-message-content" ] [ message_content ]
             ]
-        , div [ class "planga--chat-message-content" ] [ message_content ]
-        ]
 
 
 newMessageForm : Model Msg -> Html Msg
@@ -244,7 +247,8 @@ moderationWindow model =
                         --     , Html.li [] [ text "1 day" ]
                         --     , Html.li [] [ text "permanently" ]
                         --     ]
-                        , button [ onClick (Msgs.HideChatMessage subject.uuid) ] [ text "delete this message" ]
+                        , button [ onClick (Msgs.HideChatMessage subject.uuid) ] [ text "hide this message" ]
+                        , button [ onClick (Msgs.ShowChatMessage subject.uuid) ] [ text "show this message" ]
                         , Html.h2 [] [ text "Ban User" ]
                         , button [ onClick (Msgs.BanUser subject.author_uuid 1) ] [ text "1 minute" ]
                         , button [ onClick (Msgs.BanUser subject.author_uuid 5) ] [ text "5 minues" ]
@@ -252,6 +256,7 @@ moderationWindow model =
                         , button [ onClick (Msgs.BanUser subject.author_uuid (1 * 60)) ] [ text "1 hour" ]
                         , button [ onClick (Msgs.BanUser subject.author_uuid (1 * 60 * 24)) ] [ text "1 day" ]
                         , button [ onClick (Msgs.BanUser subject.author_uuid (1 * 60 * 24 * 256 * 1000)) ] [ text "indefinitely" ]
+                        , button [ onClick (Msgs.UnbanUser subject.author_uuid) ] [ text "unban" ]
                         ]
                     ]
                 ]

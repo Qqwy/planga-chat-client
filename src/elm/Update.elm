@@ -27,8 +27,10 @@ update msg model =
                     Debug.log "Debug" string
             in
             ( model, Cmd.none )
+
         Msgs.Tick current_time ->
-            ({model | current_time = current_time}, Cmd.none)
+            ( { model | current_time = current_time }, Cmd.none )
+
         Msgs.PhoenixMsg msg ->
             let
                 ( phoenix_socket, phoenix_command ) =
@@ -86,7 +88,7 @@ update msg model =
                                 |> minimumMaybe (Just chat_message.sent_at)
                     in
                     ( { model | messages = updated_messages, oldest_timestamp = oldest_timestamp }
-                    , Cmd.batch [Ports.scrollToBottom, Ports.sendBrowserNotification (chat_message.author_name ++ ": " ++ chat_message.content)]
+                    , Cmd.batch [ Ports.scrollToBottom, Ports.sendBrowserNotification (chat_message.author_name ++ ": " ++ chat_message.content) ]
                     )
 
         Msgs.ChangedChatMessage message_json ->
@@ -102,35 +104,40 @@ update msg model =
                     ( { model | messages = updated_messages }
                     , Cmd.none
                     )
-        {- Called whenever 'the current' user's info wrt a  conversation is changed.-}
+
+        {- Called whenever 'the current' user's info wrt a  conversation is changed. -}
         Msgs.ChangedYourConversationUserInfo json ->
             case JD.decodeValue Models.conversationUserInfoDecoder json of
                 Err error ->
                     let
-                        _ = Debug.log "ChangedYourConversationUserInfo error" error
+                        _ =
+                            Debug.log "ChangedYourConversationUserInfo error" error
                     in
-                        (model, Cmd.none)
+                    ( model, Cmd.none )
+
                 Ok info ->
-
                     let
-                        _ = Debug.log "ChangedYourConversationUserInfo" info
+                        _ =
+                            Debug.log "ChangedYourConversationUserInfo" info
                     in
-                    ({model| conversation_user_info = Just info}, Cmd.none)
+                    ( { model | conversation_user_info = Just info }, Cmd.none )
 
-        {- Called whenever 'a' user's info wrt a conversation is changed.-}
+        {- Called whenever 'a' user's info wrt a conversation is changed. -}
         Msgs.ChangedConversationUserInfo json ->
             case JD.decodeValue Models.conversationUserInfoDecoder json of
                 Err error ->
                     let
-                        _ = Debug.log "ChangedConversationUserInfo error" error
+                        _ =
+                            Debug.log "ChangedConversationUserInfo error" error
                     in
-                        (model, Cmd.none)
+                    ( model, Cmd.none )
+
                 Ok info ->
                     let
-                        _ = Debug.log "ChangedConversationUserInfo" info
+                        _ =
+                            Debug.log "ChangedConversationUserInfo" info
                     in
-                        (model, Cmd.none)
-
+                    ( model, Cmd.none )
 
         Msgs.MessagesSoFar messages_json ->
             let
@@ -178,9 +185,9 @@ update msg model =
 
                 Err error ->
                     let
-                        _ = Debug.log "MessagesSoFar error" error
+                        _ =
+                            Debug.log "MessagesSoFar error" error
                     in
-
                     ( model, fix_scroll_pos )
 
         Msgs.ChangeDraftMessage new_draft_message ->
@@ -203,15 +210,32 @@ update msg model =
                 ( phoenix_socket, phoenix_command ) =
                     Phoenix.Socket.push push_data model.phoenix_socket
             in
-            ( { model | phoenix_socket = phoenix_socket}, Cmd.map Msgs.PhoenixMsg phoenix_command )
+            ( { model | phoenix_socket = phoenix_socket }, Cmd.map Msgs.PhoenixMsg phoenix_command )
+
+        Msgs.ShowChatMessage message_uuid ->
+            let
+                constructed_request =
+                    JE.object
+                        [ ( "message_uuid", JE.string message_uuid )
+                        ]
+
+                push_data =
+                    Phoenix.Push.init "show_message" model.channel_name
+                        |> Phoenix.Push.withPayload constructed_request
+
+                ( phoenix_socket, phoenix_command ) =
+                    Phoenix.Socket.push push_data model.phoenix_socket
+            in
+            ( { model | phoenix_socket = phoenix_socket }, Cmd.map Msgs.PhoenixMsg phoenix_command )
+
         Msgs.BanUser user_uuid duration_minutes ->
             let
                 constructed_request =
                     JE.object
-                        [
-                         ("user_uuid", JE.string user_uuid)
-                        , ("duration_minutes", JE.int duration_minutes)
+                        [ ( "user_uuid", JE.string user_uuid )
+                        , ( "duration_minutes", JE.int duration_minutes )
                         ]
+
                 push_data =
                     Phoenix.Push.init "ban_user" model.channel_name
                         |> Phoenix.Push.withPayload constructed_request
@@ -219,16 +243,33 @@ update msg model =
                 ( phoenix_socket, phoenix_command ) =
                     Phoenix.Socket.push push_data model.phoenix_socket
             in
-                ( { model | phoenix_socket = phoenix_socket}, Cmd.map Msgs.PhoenixMsg phoenix_command )
+            ( { model | phoenix_socket = phoenix_socket }, Cmd.map Msgs.PhoenixMsg phoenix_command )
+
+        Msgs.UnbanUser user_uuid ->
+            let
+                constructed_request =
+                    JE.object
+                        [ ( "user_uuid", JE.string user_uuid )
+                        ]
+
+                push_data =
+                    Phoenix.Push.init "unban_user" model.channel_name
+                        |> Phoenix.Push.withPayload constructed_request
+
+                ( phoenix_socket, phoenix_command ) =
+                    Phoenix.Socket.push push_data model.phoenix_socket
+            in
+            ( { model | phoenix_socket = phoenix_socket }, Cmd.map Msgs.PhoenixMsg phoenix_command )
 
         Msgs.OpenModerationWindow message ->
             if Models.isModerator model then
-                ({model | moderation_window = Just {subject = message}}, Cmd.none) |> Debug.log "OpenModerationWindow"
+                ( { model | moderation_window = Just { subject = message } }, Cmd.none ) |> Debug.log "OpenModerationWindow"
+
             else
-                (model, Cmd.none)
+                ( model, Cmd.none )
 
         Msgs.CloseModerationWindow ->
-            ({model | moderation_window = Nothing}, Cmd.none)
+            ( { model | moderation_window = Nothing }, Cmd.none )
 
 
 updateScrollMsg : Model Msg -> Msgs.ScrollMsg -> ( Model Msg, Cmd Msg )

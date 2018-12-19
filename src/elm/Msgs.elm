@@ -26,7 +26,9 @@ type Msg
     | ChangeDraftMessage String
     | ScrollMsg ScrollMsg
     | HideChatMessage UUID
+    | ShowChatMessage UUID
     | BanUser UUID DurationMinutes
+    | UnbanUser UUID
     | ChangedChatMessage JD.Value
     | ChangedYourConversationUserInfo JD.Value
     | ChangedConversationUserInfo JD.Value
