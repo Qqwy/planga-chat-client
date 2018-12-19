@@ -18,7 +18,8 @@ const isProd = TARGET_ENV == prod;
 // entry and output path/filename variables
 const entryPath = path.join(__dirname, 'src/static/index.js');
 const outputPath = path.join(__dirname, 'dist');
-const outputFilename = isProd ? '[name]-[hash].js' : '[name].js'
+// const outputFilename = isProd ? '[name]-[hash].js' : '[name].js'
+const outputFilename = '[name].js';
 
 console.log('WEBPACK GO! Building for ' + TARGET_ENV);
 
@@ -46,11 +47,6 @@ var commonConfig = {
                 postcss: [autoprefixer()]
             }
         }),
-        new HtmlWebpackPlugin({
-            template: 'src/static/index.html',
-            inject: 'body',
-            filename: 'index.html'
-        })
     ]
 }
 
@@ -85,7 +81,14 @@ if (isDev === true) {
                 test: /\.sc?ss$/,
                 use: ['style-loader', 'css-loader', 'postcss-loader', 'sass-loader']
             }]
-        }
+        },
+        plugins: [
+            new HtmlWebpackPlugin({
+                template: 'src/static/index.html',
+                inject: 'body',
+                filename: 'index.html'
+            })
+        ]
     });
 }
 
@@ -120,13 +123,13 @@ if (isProd === true) {
 
             // extract CSS into a separate file
             // minify & mangle JS/CSS
-            new webpack.optimize.UglifyJsPlugin({
-                minimize: true,
-                compressor: {
-                    warnings: false
-                }
-                // mangle:  true
-            })
+            // new webpack.optimize.UglifyJsPlugin({
+            //     minimize: true,
+            //     compressor: {
+            //         warnings: false
+            //     }
+            //     // mangle:  true
+            // })
         ]
     });
 }
